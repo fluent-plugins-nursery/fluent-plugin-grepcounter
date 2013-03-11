@@ -28,6 +28,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
     end
 
     @matches = {}
+    @counts  = {}
     @mutex = Mutex.new
   end
 
@@ -44,17 +45,22 @@ class Fluent::GrepCounterOutput < Fluent::Output
 
   # Called when new line comes. This method actually does not emit
   def emit(tag, es, chain)
-    matches ||= []
+    count = 0; matches = []
     # filter out and insert
     es.each do |time,record|
       value = record[@input_key]
       next unless @regexp and @regexp.match(value)
       next if @exclude and @exclude.match(value)
-      matches << value
+      matches << value if @output_matched_message
+      count += 1
     end
     # thread safe merge
+    @counts[tag] ||= 0
     @matches[tag] ||= []
-    @mutex.synchronize { @matches[tag] += matches }
+    @mutex.synchronize do
+      @counts[tag] += count
+      @matches[tag] += matches
+    end
 
     chain.next
   end
@@ -76,22 +82,24 @@ class Fluent::GrepCounterOutput < Fluent::Output
   # This method is the real one to emit
   def flush_emit(step)
     time = Fluent::Engine.now
-    flushed_matches, @matches = @matches, {}
-    flushed_matches.each do |tag, messages|
-      output = generate_output(tag, messages)
+    flushed_counts, flushed_matches, @counts, @matches = @counts, @matches, {}, {}
+    flushed_counts.keys.each do |tag|
+      count = flushed_counts[tag]
+      matches = flushed_matches[tag]
+      output = generate_output(tag, count, matches)
       tag = @add_tag_prefix ? "#{@add_tag_prefix}.#{tag}" : @output_tag
       Fluent::Engine.emit(tag, time, output) if output
     end
   end
 
-  def generate_output(input_tag, messages)
-    return nil if messages.size < @threshold
+  def generate_output(input_tag, count, matches)
+    return nil if count < @threshold
     output = {}
-    output['count'] = messages.size
+    output['count'] = count
     output['input_tag'] = input_tag
     output['input_tag_last'] = input_tag.split(".").last
     if @output_matched_message
-      output['message'] = @output_with_joined_delimiter.nil? ? messages : messages.join(@output_with_joined_delimiter)
+      output['message'] = @output_with_joined_delimiter.nil? ? matches : matches.join(@output_with_joined_delimiter)
     end
     output
   end
