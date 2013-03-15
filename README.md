@@ -1,14 +1,8 @@
 # fluent-plugin-grepcounter [![Build Status](https://secure.travis-ci.org/sonots/fluent-plugin-grepcounter.png?branch=master)](http://travis-ci.org/sonots/fluent-plugin-grepcounter) [![Dependency Status](https://gemnasium.com/sonots/fluent-plugin-grepcounter.png)](https://gemnasium.com/sonots/fluent-plugin-grepcounter)
 
-## Component
-
-### GrepCounterOutput
-
-Fluentd plugin to count the number of matched messages
+Fluentd plugin to count the number of matched messages.
 
 ## Configuration
-
-## GrepCounterOutput
 
 Assume inputs from another plugin are as belows:
 
@@ -29,11 +23,11 @@ An example of grepcounter configuration:
       add_tag_prefix warn.count
     </source>
 
-Outputs as belows:
+Then, output bocomes as belows:
 
     warn.count.syslog.host1: {"count":2,"input_tag":"syslog.host1","input_tag_last":"host1"}
 
-Another example of grepcounter configuration:
+Another example of grepcounter configuration to use `output_matched_message`:
 
     <match syslog.**>
       type grepcounter
@@ -47,7 +41,7 @@ Another example of grepcounter configuration:
       output_with_joined_delimiter \n
     </source>
 
-Outputs as belows:
+Then, output bocomes as belows. You can use the `message` field to get all contents of matched messages. 
 
     warn.count.syslog.host1: {"count":2,"input_tag":"syslog.host1","input_tag_last":"host1","message":"2013/01/13T07:02:13.232645 WARN POST /auth\n2013/01/13T07:02:43.632145 WARN POST /login"}
 
