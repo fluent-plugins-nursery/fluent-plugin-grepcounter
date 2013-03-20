@@ -8,4 +8,5 @@ Gemfile.lock
 vendor
 doc/*
 tmp/*
+coverage
 .yardoc
