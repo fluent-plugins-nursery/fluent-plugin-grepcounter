@@ -26,7 +26,7 @@ describe Fluent::GrepCounterOutput do
         it { expect { driver }.to raise_error(Fluent::ConfigError) }
       end
 
-      context 'no output_tag for aggregate all' do
+      context 'no tag for aggregate all' do
         let(:config) do
           CONFIG + %[
           aggregate all
@@ -46,7 +46,7 @@ describe Fluent::GrepCounterOutput do
         its(:regexp) { should == /WARN/ }
         its(:exclude) { should be_nil }
         its(:threshold) { should == 1 }
-        its(:output_tag) { should be_nil }
+        its(:tag) { should be_nil }
         its(:add_tag_prefix) { should == 'count' }
       end
     end
@@ -125,10 +125,10 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
-    context 'output_tag' do
+    context 'tag' do
       let(:config) do
         CONFIG + %[
-          output_tag foo
+          tag foo
         ]
       end
       before do
@@ -176,7 +176,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) do
         CONFIG + %[
           aggregate all
-          output_tag count
+          tag count
         ]
       end
       before do

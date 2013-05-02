@@ -7,7 +7,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :count_interval, :time, :default => 5
   config_param :exclude, :string, :default => nil
   config_param :threshold, :integer, :default => 1
-  config_param :output_tag, :string, :default => nil
+  config_param :tag, :string, :default => nil
   config_param :add_tag_prefix, :string, :default => 'count'
   config_param :output_delimiter, :string, :default => nil
   config_param :aggregate, :string, :default => 'tag'
@@ -30,7 +30,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
 
     case @aggregate
     when 'all'
-      raise Fluent::ConfigError, "output_tag must be specified with aggregate all" if @output_tag.nil?
+      raise Fluent::ConfigError, "tag must be specified with aggregate all" if @tag.nil?
     when 'tag'
       # raise Fluent::ConfigError, "add_tag_prefix must be specified with aggregate tag" if @add_tag_prefix.nil?
     end
@@ -99,14 +99,14 @@ class Fluent::GrepCounterOutput < Fluent::Output
         matches += flushed_matches[tag]
       end
       output = generate_output(count, matches)
-      Fluent::Engine.emit(@output_tag, time, output) if output
+      Fluent::Engine.emit(@tag, time, output) if output
     else
       flushed_counts.keys.each do |tag|
         count = flushed_counts[tag]
         matches = flushed_matches[tag]
         output = generate_output(count, matches)
-        output_tag = @output_tag ? @output_tag : "#{@add_tag_prefix}.#{tag}"
-        Fluent::Engine.emit(output_tag, time, output) if output
+        tag = @tag ? @tag : "#{@add_tag_prefix}.#{tag}"
+        Fluent::Engine.emit(tag, time, output) if output
       end
     end
   end
