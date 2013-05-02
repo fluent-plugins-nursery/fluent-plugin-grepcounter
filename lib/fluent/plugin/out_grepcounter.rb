@@ -57,7 +57,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
     # filter out and insert
     es.each do |time,record|
       value = record[@input_key]
-      next unless @regexp and @regexp.match(value)
+      next if @regexp and !@regexp.match(value)
       next if @exclude and @exclude.match(value)
       matches << value
       count += 1

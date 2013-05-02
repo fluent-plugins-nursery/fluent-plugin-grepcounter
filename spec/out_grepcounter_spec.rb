@@ -5,7 +5,6 @@ describe Fluent::GrepCounterOutput do
   before { Fluent::Test.setup }
   CONFIG = %[
     input_key message
-    regexp WARN
   ]
   let(:tag) { 'syslog.host1' }
   let(:driver) { Fluent::Test::OutputTestDriver.new(Fluent::GrepCounterOutput, tag).configure(config) }
@@ -43,7 +42,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG }
         its(:input_key) { should == "message" }
         its(:count_interval) { should == 5 }
-        its(:regexp) { should == /WARN/ }
+        its(:regexp) { should be_nil }
         its(:exclude) { should be_nil }
         its(:threshold) { should == 1 }
         its(:tag) { should be_nil }
@@ -71,6 +70,17 @@ describe Fluent::GrepCounterOutput do
       pending
     end
 
+    context 'default' do
+      let(:config) { CONFIG }
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>4,
+          "message"=>["2013/01/13T07:02:11.124202 INFO GET /ping","2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"]
+        })
+      end
+      it { emit }
+    end
+
     context 'regexp' do
       let(:config) { CONFIG + %[ regexp WARN ] }
       before do
@@ -85,6 +95,7 @@ describe Fluent::GrepCounterOutput do
     context 'exclude' do
       let(:config) do
         CONFIG + %[
+          regexp WARN
           exclude favicon
         ]
       end
@@ -100,6 +111,7 @@ describe Fluent::GrepCounterOutput do
     context 'threshold (less than or equal to)' do
       let(:config) do
         CONFIG + %[
+          regexp WARN
           threshold 3
         ]
       end
@@ -115,6 +127,7 @@ describe Fluent::GrepCounterOutput do
     context 'threshold (greater)' do
       let(:config) do
         CONFIG + %[
+          regexp WARN
           threshold 4
         ]
       end
@@ -128,6 +141,7 @@ describe Fluent::GrepCounterOutput do
     context 'tag' do
       let(:config) do
         CONFIG + %[
+          regexp WARN
           tag foo
         ]
       end
@@ -143,6 +157,7 @@ describe Fluent::GrepCounterOutput do
     context 'add_tag_prefix' do
       let(:config) do
         CONFIG + %[
+          regexp WARN
           add_tag_prefix foo
         ]
       end
@@ -159,6 +174,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) do
         # \\n shall be \n in config file
         CONFIG + %[
+          regexp WARN
           output_matched_message true
           output_delimiter \\n
         ]
@@ -175,6 +191,7 @@ describe Fluent::GrepCounterOutput do
     context 'aggregate all' do
       let(:config) do
         CONFIG + %[
+          regexp WARN
           aggregate all
           tag count
         ]
