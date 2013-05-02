@@ -44,6 +44,20 @@ Then, output bocomes as belows. You can use the `message` field is joined with \
 
     warn.count.syslog.host1: {"count":2,"message":"2013/01/13T07:02:13.232645 WARN POST /auth\n2013/01/13T07:02:43.632145 WARN POST /login"}
 
+## Parameters
+
+- aggregate
+
+    Count by each `tag` or `all`. The default value is `tag`. 
+
+- tag
+
+    The output tag. Required for aggregate `all`. 
+
+## ChaangeLog
+
+See [CHANGELOG.md](CHANGELOG.md) for details.
+
 ## Contributing
 
 1. Fork it
@@ -55,3 +69,4 @@ Then, output bocomes as belows. You can use the `message` field is joined with \
 ## Copyright
 
 Copyright (c) 2013 Naotoshi SEO. See [LICENSE](LICENSE) for details.
+
