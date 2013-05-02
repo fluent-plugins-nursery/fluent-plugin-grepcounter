@@ -5,7 +5,6 @@ describe Fluent::GrepCounterOutput do
   before { Fluent::Test.setup }
   CONFIG = %[
     input_key message
-    regexp WARN
   ]
   let(:tag) { 'syslog.host1' }
   let(:driver) { Fluent::Test::OutputTestDriver.new(Fluent::GrepCounterOutput, tag).configure(config) }
@@ -17,8 +16,21 @@ describe Fluent::GrepCounterOutput do
         it { expect { driver }.to raise_error(Fluent::ConfigError) }
       end
 
-      context "check output_with_joined_delimiter" do
-        let(:config) { CONFIG + %[ output_with_joined_delimiter \\n ] }
+      context 'invalid aggregate' do
+        let(:config) do
+          CONFIG + %[
+          aggregate foo
+          ]
+        end
+        it { expect { driver }.to raise_error(Fluent::ConfigError) }
+      end
+
+      context 'no tag for aggregate all' do
+        let(:config) do
+          CONFIG + %[
+          aggregate all
+          ]
+        end
         it { expect { driver }.to raise_error(Fluent::ConfigError) }
       end
     end
@@ -30,13 +42,11 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG }
         its(:input_key) { should == "message" }
         its(:count_interval) { should == 5 }
-        its(:regexp) { should == /WARN/ }
+        its(:regexp) { should be_nil }
         its(:exclude) { should be_nil }
         its(:threshold) { should == 1 }
-        its(:output_tag) { should == 'count' }
-        its(:add_tag_prefix) { should be_nil }
-        its(:output_matched_message) { should be_false }
-        its(:output_with_joined_delimiter) { should be_nil }
+        its(:tag) { should be_nil }
+        its(:add_tag_prefix) { should == 'count' }
       end
     end
   end
@@ -60,11 +70,24 @@ describe Fluent::GrepCounterOutput do
       pending
     end
 
+    context 'default' do
+      let(:config) { CONFIG }
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>4,
+          "message"=>["2013/01/13T07:02:11.124202 INFO GET /ping","2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"]
+        })
+      end
+      it { emit }
+    end
+
     context 'regexp' do
       let(:config) { CONFIG + %[ regexp WARN ] }
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count", time, {"count"=>3, "input_tag"=>tag, "input_tag_last"=>tag.split(".").last})
+        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>3,
+          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"]
+        })
       end
       it { emit }
     end
@@ -72,12 +95,15 @@ describe Fluent::GrepCounterOutput do
     context 'exclude' do
       let(:config) do
         CONFIG + %[
+          regexp WARN
           exclude favicon
         ]
       end
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count", time, {"count"=>2, "input_tag"=>tag, "input_tag_last"=>tag.split(".").last})
+        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>2,
+          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:43.632145 WARN POST /login"]
+        })
       end
       it { emit }
     end
@@ -85,12 +111,15 @@ describe Fluent::GrepCounterOutput do
     context 'threshold (less than or equal to)' do
       let(:config) do
         CONFIG + %[
+          regexp WARN
           threshold 3
         ]
       end
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count", time, {"count"=>3, "input_tag"=>tag, "input_tag_last"=>tag.split(".").last})
+        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>3,
+          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"]
+        })
       end
       it { emit }
     end
@@ -98,6 +127,7 @@ describe Fluent::GrepCounterOutput do
     context 'threshold (greater)' do
       let(:config) do
         CONFIG + %[
+          regexp WARN
           threshold 4
         ]
       end
@@ -108,15 +138,18 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
-    context 'output_tag' do
+    context 'tag' do
       let(:config) do
         CONFIG + %[
-          output_tag foo
+          regexp WARN
+          tag foo
         ]
       end
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("foo", time, {"count"=>3, "input_tag"=>tag, "input_tag_last"=>tag.split(".").last})
+        Fluent::Engine.should_receive(:emit).with("foo", time, {"count"=>3,
+          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"]
+        })
       end
       it { emit }
     end
@@ -124,45 +157,49 @@ describe Fluent::GrepCounterOutput do
     context 'add_tag_prefix' do
       let(:config) do
         CONFIG + %[
+          regexp WARN
           add_tag_prefix foo
         ]
       end
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("foo.#{tag}", time, {"count"=>3, "input_tag"=>tag, "input_tag_last"=>tag.split(".").last})
-      end
-      it { emit }
-    end
-
-    context 'output_matched_message' do
-      let(:config) do
-        CONFIG + %[
-          output_matched_message true
-        ]
-      end
-      before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count", time, {
-          "count"=>3, "input_tag"=>tag, "input_tag_last"=>tag.split(".").last,
+        Fluent::Engine.should_receive(:emit).with("foo.#{tag}", time, {"count"=>3,
           "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"]
         })
       end
       it { emit }
     end
 
-    context 'output_with_joined_delimiter' do
+    context 'output_delimiter' do
       let(:config) do
         # \\n shall be \n in config file
         CONFIG + %[
+          regexp WARN
           output_matched_message true
-          output_with_joined_delimiter \\n
+          output_delimiter \\n
         ]
       end
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count", time, {
-          "count"=>3, "input_tag"=>tag, "input_tag_last"=>tag.split(".").last,
+        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>3, 
           "message"=>"2013/01/13T07:02:13.232645 WARN POST /auth\\n2013/01/13T07:02:21.542145 WARN GET /favicon.ico\\n2013/01/13T07:02:43.632145 WARN POST /login"
+        })
+      end
+      it { emit }
+    end
+
+    context 'aggregate all' do
+      let(:config) do
+        CONFIG + %[
+          regexp WARN
+          aggregate all
+          tag count
+        ]
+      end
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        Fluent::Engine.should_receive(:emit).with("count", time, {"count"=>3, 
+          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"]
         })
       end
       it { emit }
