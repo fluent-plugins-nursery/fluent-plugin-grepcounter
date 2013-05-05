@@ -9,7 +9,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :threshold, :integer, :default => 1
   config_param :output_tag, :string, :default => nil
   config_param :add_tag_prefix, :string, :default => 'count'
-  config_param :output_delimiter, :string, :default => nil
+  config_param :output_with_joined_delimiter, :string, :default => nil
   config_param :aggregate, :string, :default => 'tag'
 
   attr_accessor :matches
@@ -115,7 +115,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
     return nil if count < @threshold
     output = {}
     output['count'] = count
-    output['message'] = @output_delimiter.nil? ? matches : matches.join(@output_delimiter)
+    output['message'] = @output_with_joined_delimiter.nil? ? matches : matches.join(@output_with_joined_delimiter)
     if tag
       output['input_tag'] = tag
       output['input_tag_last'] = tag.split('.').last

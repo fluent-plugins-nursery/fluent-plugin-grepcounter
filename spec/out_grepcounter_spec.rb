@@ -182,12 +182,12 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
-    context 'output_delimiter' do
+    context 'output_with_joined_delimiter' do
       let(:config) do
         # \\n shall be \n in config file
         CONFIG + %[
           regexp WARN
-          output_delimiter \\n
+          output_with_joined_delimiter \\n
         ]
       end
       before do

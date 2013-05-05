@@ -1,3 +1,9 @@
+## 0.1.1 (2013/05/05)
+
+Changes:
+
+  - Revert `output_delimiter` to `output_with_joined_delimiter`.
+
 ## 0.1.0 (2013/05/05)
 
 Features:
