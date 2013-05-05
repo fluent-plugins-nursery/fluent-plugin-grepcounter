@@ -23,9 +23,14 @@ An example of grepcounter configuration:
       add_tag_prefix warn.count
     </source>
 
-Then, output bocomes as belows:
+Then, output bocomes as belows (indented):
 
-    warn.count.syslog.host1: {"count":2,"message":["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:43.632145 WARN POST /login"]}
+    warn.count.syslog.host1: {
+      "count":2,
+      "message":["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:43.632145 WARN POST /login"],
+      "input_tag":"syslog.host1",
+      "input_tag_last":"host1",
+    }
 
 Another example of grepcounter configuration to use `output_delimiter`:
 
@@ -40,9 +45,14 @@ Another example of grepcounter configuration to use `output_delimiter`:
       output_delimiter \n
     </source>
 
-Then, output bocomes as belows. You can use the `message` field is joined with \n.
+Then, output bocomes as belows (indented). You can use the `message` field is joined with \n.
 
-    warn.count.syslog.host1: {"count":2,"message":"2013/01/13T07:02:13.232645 WARN POST /auth\n2013/01/13T07:02:43.632145 WARN POST /login"}
+    warn.count.syslog.host1: {
+      "count":2,
+      "message":"2013/01/13T07:02:13.232645 WARN POST /auth\n2013/01/13T07:02:43.632145 WARN POST /login",
+      "input_tag":"syslog.host1",
+      "input_tag_last":"host1",
+    }
 
 ## Parameters
 
