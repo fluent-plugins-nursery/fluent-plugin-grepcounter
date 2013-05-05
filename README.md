@@ -32,7 +32,7 @@ Then, output bocomes as belows (indented):
       "input_tag_last":"host1",
     }
 
-Another example of grepcounter configuration to use `output_delimiter`:
+Another example of grepcounter configuration to use `output_with_joined_delimiter`:
 
     <match syslog.**>
       type grepcounter
@@ -42,7 +42,7 @@ Another example of grepcounter configuration to use `output_delimiter`:
       exclude favicon.ico
       threshold 1
       add_tag_prefix warn.count
-      output_delimiter \n
+      output_with_joined_delimiter \n
     </source>
 
 Then, output bocomes as belows (indented). You can use the `message` field is joined with \n.
