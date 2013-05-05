@@ -3,14 +3,14 @@ class Fluent::GrepCounterOutput < Fluent::Output
   Fluent::Plugin.register_output('grepcounter', self)
 
   config_param :input_key, :string
-  config_param :regexp, :string
+  config_param :regexp, :string, :default => nil
   config_param :count_interval, :time, :default => 5
   config_param :exclude, :string, :default => nil
   config_param :threshold, :integer, :default => 1
-  config_param :output_tag, :string, :default => 'count'
-  config_param :add_tag_prefix, :string, :default => nil
-  config_param :output_matched_message, :bool, :default => false
-  config_param :output_with_joined_delimiter, :string, :default => nil
+  config_param :output_tag, :string, :default => nil
+  config_param :add_tag_prefix, :string, :default => 'count'
+  config_param :output_delimiter, :string, :default => nil
+  config_param :aggregate, :string, :default => 'tag'
 
   attr_accessor :matches
   attr_accessor :last_checked
@@ -24,8 +24,15 @@ class Fluent::GrepCounterOutput < Fluent::Output
     @exclude = Regexp.compile(@exclude) if @exclude
     @threshold = @threshold.to_i
 
-    if @output_with_joined_delimiter and @output_matched_message == false
-      raise Fluent::ConfigError, "'output_matched_message' must be true to use 'output_with_joined_delimiter'"
+    unless ['tag', 'all'].include?(@aggregate)
+      raise Fluent::ConfigError, "grepcounter aggregate allows tag/all"
+    end
+
+    case @aggregate
+    when 'all'
+      raise Fluent::ConfigError, "output_tag must be specified with aggregate all" if @output_tag.nil?
+    when 'tag'
+      # raise Fluent::ConfigError, "add_tag_prefix must be specified with aggregate tag" if @add_tag_prefix.nil?
     end
 
     @matches = {}
@@ -50,9 +57,9 @@ class Fluent::GrepCounterOutput < Fluent::Output
     # filter out and insert
     es.each do |time,record|
       value = record[@input_key]
-      next unless @regexp and @regexp.match(value)
+      next if @regexp and !@regexp.match(value)
       next if @exclude and @exclude.match(value)
-      matches << value if @output_matched_message
+      matches << value
       count += 1
     end
     # thread safe merge
@@ -84,23 +91,34 @@ class Fluent::GrepCounterOutput < Fluent::Output
   def flush_emit(step)
     time = Fluent::Engine.now
     flushed_counts, flushed_matches, @counts, @matches = @counts, @matches, {}, {}
-    flushed_counts.keys.each do |tag|
-      count = flushed_counts[tag]
-      matches = flushed_matches[tag]
-      output = generate_output(tag, count, matches)
-      tag = @add_tag_prefix ? "#{@add_tag_prefix}.#{tag}" : @output_tag
-      Fluent::Engine.emit(tag, time, output) if output
+
+    if @aggregate == 'all'
+      count = 0; matches = []
+      flushed_counts.keys.each do |tag|
+        count += flushed_counts[tag]
+        matches += flushed_matches[tag]
+      end
+      output = generate_output(count, matches)
+      Fluent::Engine.emit(@output_tag, time, output) if output
+    else
+      flushed_counts.keys.each do |tag|
+        count = flushed_counts[tag]
+        matches = flushed_matches[tag]
+        output = generate_output(count, matches, tag)
+        tag = @output_tag ? @output_tag : "#{@add_tag_prefix}.#{tag}"
+        Fluent::Engine.emit(tag, time, output) if output
+      end
     end
   end
 
-  def generate_output(input_tag, count, matches)
+  def generate_output(count, matches, tag = nil)
     return nil if count < @threshold
     output = {}
     output['count'] = count
-    output['input_tag'] = input_tag
-    output['input_tag_last'] = input_tag.split(".").last
-    if @output_matched_message
-      output['message'] = @output_with_joined_delimiter.nil? ? matches : matches.join(@output_with_joined_delimiter)
+    output['message'] = @output_delimiter.nil? ? matches : matches.join(@output_delimiter)
+    if tag
+      output['input_tag'] = tag
+      output['input_tag_last'] = tag.split('.').last
     end
     output
   end

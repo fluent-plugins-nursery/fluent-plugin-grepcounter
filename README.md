@@ -25,9 +25,9 @@ An example of grepcounter configuration:
 
 Then, output bocomes as belows:
 
-    warn.count.syslog.host1: {"count":2,"input_tag":"syslog.host1","input_tag_last":"host1"}
+    warn.count.syslog.host1: {"count":2,"message":["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:43.632145 WARN POST /login"]}
 
-Another example of grepcounter configuration to use `output_matched_message`:
+Another example of grepcounter configuration to use `output_delimiter`:
 
     <match syslog.**>
       type grepcounter
@@ -37,13 +37,26 @@ Another example of grepcounter configuration to use `output_matched_message`:
       exclude favicon.ico
       threshold 1
       add_tag_prefix warn.count
-      output_matched_message true
-      output_with_joined_delimiter \n
+      output_delimiter \n
     </source>
 
-Then, output bocomes as belows. You can use the `message` field to get all contents of matched messages. 
+Then, output bocomes as belows. You can use the `message` field is joined with \n.
 
-    warn.count.syslog.host1: {"count":2,"input_tag":"syslog.host1","input_tag_last":"host1","message":"2013/01/13T07:02:13.232645 WARN POST /auth\n2013/01/13T07:02:43.632145 WARN POST /login"}
+    warn.count.syslog.host1: {"count":2,"message":"2013/01/13T07:02:13.232645 WARN POST /auth\n2013/01/13T07:02:43.632145 WARN POST /login"}
+
+## Parameters
+
+- aggregate
+
+    Count by each `tag` or `all`. The default value is `tag`. 
+
+- output_tag
+
+    The output tag. Required for aggregate `all`. 
+
+## ChaangeLog
+
+See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ## Contributing
 
@@ -56,3 +69,4 @@ Then, output bocomes as belows. You can use the `message` field to get all conte
 ## Copyright
 
 Copyright (c) 2013 Naotoshi SEO. See [LICENSE](LICENSE) for details.
+
