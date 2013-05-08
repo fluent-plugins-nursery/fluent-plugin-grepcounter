@@ -1,6 +1,13 @@
 # encoding: UTF-8
 require_relative 'spec_helper'
 
+class Fluent::Test::OutputTestDriver
+  def emit_with_tag(record, time=Time.now, tag = nil)
+    @tag = tag if tag
+    emit(record, time)
+  end
+end
+
 describe Fluent::GrepCounterOutput do
   before { Fluent::Test.setup }
   CONFIG = %[
@@ -202,6 +209,12 @@ describe Fluent::GrepCounterOutput do
     end
 
     context 'aggregate all' do
+      let(:emit) do
+        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar') } }
+        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar2') } }
+        driver.instance.flush_emit(0)
+      end
+
       let(:config) do
         CONFIG + %[
           regexp WARN
@@ -211,8 +224,8 @@ describe Fluent::GrepCounterOutput do
       end
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count", time, {"count"=>3, 
-          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"],
+        Fluent::Engine.should_receive(:emit).with("count", time, {"count"=>3*2,
+          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"]*2,
         })
       end
       it { emit }
