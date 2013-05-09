@@ -71,6 +71,9 @@ class Fluent::GrepCounterOutput < Fluent::Output
     end
 
     chain.next
+  rescue => e
+    $log.warn e.message
+    $log.warn e.backtrace.join(', ')
   end
 
   # thread callback
@@ -79,10 +82,15 @@ class Fluent::GrepCounterOutput < Fluent::Output
     @last_checked = Fluent::Engine.now
     while true
       sleep 0.5
-      if Fluent::Engine.now - @last_checked >= @count_interval
-        now = Fluent::Engine.now
-        flush_emit(now - @last_checked)
-        @last_checked = now
+      begin
+        if Fluent::Engine.now - @last_checked >= @count_interval
+          now = Fluent::Engine.now
+          flush_emit(now - @last_checked)
+          @last_checked = now
+        end
+      rescue => e
+        $log.warn e.message
+        $log.warn e.backtrace.join(", ")
       end
     end
   end
@@ -112,6 +120,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
   end
 
   def generate_output(count, matches, tag = nil)
+    return nil if count.nil?
     return nil if count < @threshold
     output = {}
     output['count'] = count
