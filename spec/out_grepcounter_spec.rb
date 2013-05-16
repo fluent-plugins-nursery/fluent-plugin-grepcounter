@@ -230,6 +230,24 @@ describe Fluent::GrepCounterOutput do
       end
       it { emit }
     end
+
+    context 'replace_invalid_sequence' do
+      let(:config) do
+        CONFIG + %[
+          regexp WARN
+          replace_invalid_sequence true
+        ]
+      end
+      let(:messages) do
+        [
+          "\xff".force_encoding('UTF-8'),
+        ]
+      end
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+      end
+      it { expect { emit }.not_to raise_error(ArgumentError) }
+    end
   end
 end
 

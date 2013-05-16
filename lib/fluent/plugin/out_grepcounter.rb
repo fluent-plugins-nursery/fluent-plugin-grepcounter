@@ -11,6 +11,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :add_tag_prefix, :string, :default => 'count'
   config_param :output_with_joined_delimiter, :string, :default => nil
   config_param :aggregate, :string, :default => 'tag'
+  config_param :replace_invalid_sequence, :bool, :default => false
 
   attr_accessor :matches
   attr_accessor :last_checked
@@ -57,8 +58,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
     # filter out and insert
     es.each do |time,record|
       value = record[@input_key]
-      next if @regexp and !@regexp.match(value)
-      next if @exclude and @exclude.match(value)
+      next unless match(value.to_s)
       matches << value
       count += 1
     end
@@ -132,4 +132,25 @@ class Fluent::GrepCounterOutput < Fluent::Output
     output
   end
 
+  def match(string)
+    begin
+      return false if @regexp and !@regexp.match(string)
+      return false if @exclude and @exclude.match(string)
+    rescue ArgumentError => e
+      unless e.message.index("invalid byte sequence in") == 0
+        raise
+      end
+      string = replace_invalid_byte(string)
+      return false if @regexp and !@regexp.match(string)
+      return false if @exclude and @exclude.match(string)
+    end
+    return true
+  end
+
+  def replace_invalid_byte(string)
+    replace_options = { invalid: :replace, undef: :replace, replace: '?' }
+    original_encoding = string.encoding
+    temporal_encoding = (original_encoding == Encoding::UTF_8 ? Encoding::UTF_16BE : Encoding::UTF_8)
+    string.encode(temporal_encoding, original_encoding, replace_options).encode(original_encoding)
+  end
 end
