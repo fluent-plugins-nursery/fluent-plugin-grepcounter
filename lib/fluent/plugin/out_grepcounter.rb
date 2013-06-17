@@ -124,6 +124,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
 
   def generate_output(count, matches, tag = nil)
     return nil if count.nil?
+    return nil if count == 0 # ignore 0 because standby nodes receive no message usually
     return nil unless eval("#{count} #{@comparator} #{@threshold}")
     output = {}
     output['count'] = count
