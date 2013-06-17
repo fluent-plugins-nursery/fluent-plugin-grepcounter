@@ -45,7 +45,7 @@ Another example of grepcounter configuration to use `output_with_joined_delimite
       output_with_joined_delimiter \n
     </source>
 
-Then, output bocomes as belows (indented). You can use the `message` field is joined with \n.
+Then, output bocomes as belows (indented). You can see the `message` field is joined with \n.
 
     warn.count.syslog.host1: {
       "count":2,
@@ -56,13 +56,49 @@ Then, output bocomes as belows (indented). You can use the `message` field is jo
 
 ## Parameters
 
+- count\_interval
+
+    The interval time to count in seconds. Default is 60.
+
+- input\_key
+
+    The target field key to grep out
+
+- regexp
+
+    The filtering regular expression
+
+- exclude
+
+    The excluding regular expression like grep -v
+
+- threshold
+
+    The threshold number to emit
+
+- comparison
+
+    The comparison operator for the threshold (either of `>=` or `<=`). Default is `>=`, i.e., emit if count >= threshold. 
+
+- output\_with\_joined\_delimiter
+
+    Join the output message array field with the specified delimiter to make the output message be a string. 
+
 - aggregate
 
     Count by each `tag` or `all`. The default value is `tag`. 
 
-- output_tag
+- output\_tag
 
     The output tag. Required for aggregate `all`. 
+
+- add\_tag\_prefix
+
+    Add tag prefix for output message
+
+- replace\_invalid\_sequence
+
+    Replace invalid byte sequence in UTF-8 with '?' character if `true`
 
 ## ChaangeLog
 

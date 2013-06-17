@@ -40,6 +40,15 @@ describe Fluent::GrepCounterOutput do
         end
         it { expect { driver }.to raise_error(Fluent::ConfigError) }
       end
+
+      context 'invalid comparison' do
+        let(:config) do
+          CONFIG + %[
+          comparison foo
+          ]
+        end
+        it { expect { driver }.to raise_error(Fluent::ConfigError) }
+      end
     end
 
     describe 'good configuration' do
@@ -52,6 +61,7 @@ describe Fluent::GrepCounterOutput do
         its(:regexp) { should be_nil }
         its(:exclude) { should be_nil }
         its(:threshold) { should == 1 }
+        its(:comparison) { should == '>=' }
         its(:output_tag) { should be_nil }
         its(:add_tag_prefix) { should == 'count' }
       end
@@ -121,7 +131,7 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
-    context 'threshold (less than or equal to)' do
+    context 'threshold (hit)' do
       let(:config) do
         CONFIG + %[
           regexp WARN
@@ -139,7 +149,7 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
-    context 'threshold (greater)' do
+    context 'threshold (miss)' do
       let(:config) do
         CONFIG + %[
           regexp WARN
@@ -247,6 +257,42 @@ describe Fluent::GrepCounterOutput do
         Fluent::Engine.stub(:now).and_return(time)
       end
       it { expect { emit }.not_to raise_error(ArgumentError) }
+    end
+
+    describe "comparison <=" do
+      context 'threshold (hit)' do
+        let(:config) do
+          CONFIG + %[
+          regexp WARN
+          threshold 3
+          comparison <=
+          ]
+        end
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>3,
+            "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"],
+            "input_tag" => tag,
+            "input_tag_last" => tag.split('.').last,
+          })
+        end
+        it { emit }
+      end
+
+      context 'threshold (miss)' do
+        let(:config) do
+          CONFIG + %[
+          regexp WARN
+          threshold 2
+          comparison <=
+          ]
+        end
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_not_receive(:emit)
+        end
+        it { emit }
+      end
     end
   end
 end
