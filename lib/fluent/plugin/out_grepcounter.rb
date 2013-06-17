@@ -7,6 +7,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :count_interval, :time, :default => 5
   config_param :exclude, :string, :default => nil
   config_param :threshold, :integer, :default => 1
+  config_param :comparison, :string, :default => '>='
   config_param :output_tag, :string, :default => nil
   config_param :add_tag_prefix, :string, :default => 'count'
   config_param :output_with_joined_delimiter, :string, :default => nil
@@ -25,15 +26,19 @@ class Fluent::GrepCounterOutput < Fluent::Output
     @exclude = Regexp.compile(@exclude) if @exclude
     @threshold = @threshold.to_i
 
+    unless ['>=', '<='].include?(@comparison)
+      raise Fluent::ConfigError, "grepcounter: comparison allows >=, <="
+    end
+
     unless ['tag', 'all'].include?(@aggregate)
-      raise Fluent::ConfigError, "grepcounter aggregate allows tag/all"
+      raise Fluent::ConfigError, "grepcounter: aggregate allows tag/all"
     end
 
     case @aggregate
     when 'all'
-      raise Fluent::ConfigError, "output_tag must be specified with aggregate all" if @output_tag.nil?
+      raise Fluent::ConfigError, "grepcounter: output_tag must be specified with aggregate all" if @output_tag.nil?
     when 'tag'
-      # raise Fluent::ConfigError, "add_tag_prefix must be specified with aggregate tag" if @add_tag_prefix.nil?
+      # raise Fluent::ConfigError, "grepcounter: add_tag_prefix must be specified with aggregate tag" if @add_tag_prefix.nil?
     end
 
     @matches = {}
@@ -121,7 +126,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
 
   def generate_output(count, matches, tag = nil)
     return nil if count.nil?
-    return nil if count < @threshold
+    return nil unless eval("#{count} #{@comparison} #{@threshold}")
     output = {}
     output['count'] = count
     output['message'] = @output_with_joined_delimiter.nil? ? matches : matches.join(@output_with_joined_delimiter)
