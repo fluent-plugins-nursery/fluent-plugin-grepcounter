@@ -41,10 +41,10 @@ describe Fluent::GrepCounterOutput do
         it { expect { driver }.to raise_error(Fluent::ConfigError) }
       end
 
-      context 'invalid comparison' do
+      context 'invalid comparator' do
         let(:config) do
           CONFIG + %[
-          comparison foo
+          comparator foo
           ]
         end
         it { expect { driver }.to raise_error(Fluent::ConfigError) }
@@ -61,7 +61,7 @@ describe Fluent::GrepCounterOutput do
         its(:regexp) { should be_nil }
         its(:exclude) { should be_nil }
         its(:threshold) { should == 1 }
-        its(:comparison) { should == '>=' }
+        its(:comparator) { should == '>=' }
         its(:output_tag) { should be_nil }
         its(:add_tag_prefix) { should == 'count' }
       end
@@ -259,13 +259,13 @@ describe Fluent::GrepCounterOutput do
       it { expect { emit }.not_to raise_error(ArgumentError) }
     end
 
-    describe "comparison <=" do
+    describe "comparator <=" do
       context 'threshold (hit)' do
         let(:config) do
           CONFIG + %[
           regexp WARN
           threshold 3
-          comparison <=
+          comparator <=
           ]
         end
         before do
@@ -284,7 +284,7 @@ describe Fluent::GrepCounterOutput do
           CONFIG + %[
           regexp WARN
           threshold 2
-          comparison <=
+          comparator <=
           ]
         end
         before do
