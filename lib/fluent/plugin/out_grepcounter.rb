@@ -77,8 +77,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
 
     chain.next
   rescue => e
-    $log.warn e.message
-    $log.warn e.backtrace.join(', ')
+    $log.warn "grepcounter: #{e.class} #{e.message} #{e.backtrace.first}"
   end
 
   # thread callback
@@ -94,8 +93,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
           @last_checked = now
         end
       rescue => e
-        $log.warn e.message
-        $log.warn e.backtrace.join(", ")
+        $log.warn "grepcounter: #{e.class} #{e.message} #{e.backtrace.first}"
       end
     end
   end
