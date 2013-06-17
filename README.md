@@ -79,6 +79,7 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 - comparison
 
     The comparison operator for the threshold (either of `>=` or `<=`). Default is `>=`, i.e., emit if count >= threshold. 
+    NOTE: count <= 0 works only if aggregate `all` 
 
 - output\_with\_joined\_delimiter
 
