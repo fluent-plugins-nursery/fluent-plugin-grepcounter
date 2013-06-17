@@ -7,7 +7,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :count_interval, :time, :default => 5
   config_param :exclude, :string, :default => nil
   config_param :threshold, :integer, :default => 1
-  config_param :comparison, :string, :default => '>='
+  config_param :comparator, :string, :default => '>='
   config_param :output_tag, :string, :default => nil
   config_param :add_tag_prefix, :string, :default => 'count'
   config_param :output_with_joined_delimiter, :string, :default => nil
@@ -26,8 +26,8 @@ class Fluent::GrepCounterOutput < Fluent::Output
     @exclude = Regexp.compile(@exclude) if @exclude
     @threshold = @threshold.to_i
 
-    unless ['>=', '<='].include?(@comparison)
-      raise Fluent::ConfigError, "grepcounter: comparison allows >=, <="
+    unless ['>=', '<='].include?(@comparator)
+      raise Fluent::ConfigError, "grepcounter: comparator allows >=, <="
     end
 
     unless ['tag', 'all'].include?(@aggregate)
@@ -124,7 +124,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
 
   def generate_output(count, matches, tag = nil)
     return nil if count.nil?
-    return nil unless eval("#{count} #{@comparison} #{@threshold}")
+    return nil unless eval("#{count} #{@comparator} #{@threshold}")
     output = {}
     output['count'] = count
     output['message'] = @output_with_joined_delimiter.nil? ? matches : matches.join(@output_with_joined_delimiter)
