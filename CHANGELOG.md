@@ -1,3 +1,9 @@
+## 0.1.3 (20130617)
+
+Features
+
+  - comparison
+
 ## 0.1.2 (2013/05/16)
 
 Features
