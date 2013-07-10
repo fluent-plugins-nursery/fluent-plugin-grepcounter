@@ -101,7 +101,7 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 
     Replace invalid byte sequence in UTF-8 with '?' character if `true`
 
-## ChaangeLog
+## ChangeLog
 
 See [CHANGELOG.md](CHANGELOG.md) for details.
 
