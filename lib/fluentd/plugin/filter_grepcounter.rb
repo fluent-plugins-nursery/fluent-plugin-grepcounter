@@ -64,7 +64,7 @@ class Fluentd::Plugin::GrepCounterFilter < Fluentd::Plugin::Filter
     es.each {|time,record|
       handle_error(tag, time, record) {
         value = record[@input_key]
-        return unless match(value.to_s)
+        next unless match(value.to_s)
         matches << value
         count += 1
       }

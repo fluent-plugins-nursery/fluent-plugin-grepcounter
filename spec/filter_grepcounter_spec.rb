@@ -5,7 +5,7 @@ include Fluentd::PluginSpecHelper
 module Fluentd::PluginSpecHelper::GrepCounterFilter
   # Create the GrepCounterFilter Plugin TestDriver
   # let(:config)
-  def create_driver
+  def create_driver(config = config)
     generate_driver(Fluentd::Plugin::GrepCounterFilter, config)
   end
 
@@ -15,16 +15,25 @@ module Fluentd::PluginSpecHelper::GrepCounterFilter
   # let(:tag)
   # let(:time)
   # let(:messages)
-  def emit(driver = create_driver)
+  def emit(driver = create_driver, tag = tag, time = time, messages = messages)
     es = Fluentd::MultiEventCollection.new
-    messages.each {|message| es.add(time, message) }
+    messages.each {|message| es.add(time, {'message' => message}) }
     driver.run do |d|
       d.with(tag, time) do |d|
         d.pitches(es)
       end
     end
+    driver.events
+  end
+
+  def flush(driver)
     driver.instance.flush_emit(1)
     driver.events
+  end
+
+  def emit_and_flush(driver = create_driver)
+    emit(driver)
+    flush(driver)
   end
 end
 
@@ -106,44 +115,43 @@ describe Fluentd::Plugin::GrepCounterFilter do
     context 'no grep' do
       let(:config) { CONFIG }
       it 'should pass all messages' do
-        record = emit["count.#{tag}"].first.record
+        record = emit_and_flush["count.#{tag}"].first.record
         expect(record["count"]).to eql(4)
         expect(record["message"].size).to eql(4)
+        expect(record["message"]).to be_kind_of(Array)
         expect(record["input_tag"]).to eql(tag)
         expect(record["input_tag_last"]).to eql(tag.split('.').last)
       end
     end
 
-=begin
     context 'regexp' do
       let(:config) { CONFIG + %[ regexp WARN ] }
-      before do
-        Fluentd::Plugin::Engine.stub(:now).and_return(time)
-        Fluentd::Plugin::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>3,
-          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"],
-          "input_tag" => tag,
-          "input_tag_last" => tag.split('.').last,
-        })
+      it 'should grep WARN' do
+        record = emit_and_flush["count.#{tag}"].first.record
+        expect(record["count"]).to eql(3)
+        expect(record["message"].size).to eql(3)
+        expect(record["message"]).to be_kind_of(Array)
+        expect(record["input_tag"]).to eql(tag)
+        expect(record["input_tag_last"]).to eql(tag.split('.').last)
+        record["message"].each {|message| expect(message).to include('WARN') }
       end
-      it { emit }
     end
 
     context 'exclude' do
       let(:config) do
         CONFIG + %[
-          regexp WARN
           exclude favicon
         ]
       end
-      before do
-        Fluentd::Plugin::Engine.stub(:now).and_return(time)
-        Fluentd::Plugin::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>2,
-          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:43.632145 WARN POST /login"],
-          "input_tag" => tag,
-          "input_tag_last" => tag.split('.').last,
-        })
+      it 'should exclude favicon' do
+        record = emit_and_flush["count.#{tag}"].first.record
+        expect(record["count"]).to eql(3)
+        expect(record["message"].size).to eql(3)
+        expect(record["message"]).to be_kind_of(Array)
+        expect(record["input_tag"]).to eql(tag)
+        expect(record["input_tag_last"]).to eql(tag.split('.').last)
+        record["message"].each {|message| expect(message).not_to include('favicon') }
       end
-      it { emit }
     end
 
     context 'threshold (hit)' do
@@ -153,15 +161,9 @@ describe Fluentd::Plugin::GrepCounterFilter do
           threshold 3
         ]
       end
-      before do
-        Fluentd::Plugin::Engine.stub(:now).and_return(time)
-        Fluentd::Plugin::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>3,
-          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"],
-          "input_tag" => tag,
-          "input_tag_last" => tag.split('.').last,
-        })
+      it 'should emit' do
+        expect(emit_and_flush).to have_key("count.#{tag}")
       end
-      it { emit }
     end
 
     context 'threshold (miss)' do
@@ -171,11 +173,9 @@ describe Fluentd::Plugin::GrepCounterFilter do
           threshold 4
         ]
       end
-      before do
-        Fluentd::Plugin::Engine.stub(:now).and_return(time)
-        Fluentd::Plugin::Engine.should_not_receive(:emit)
+      it 'should not emit' do
+        expect(emit_and_flush).not_to have_key("count.#{tag}")
       end
-      it { emit }
     end
 
     context 'output_tag' do
@@ -185,15 +185,9 @@ describe Fluentd::Plugin::GrepCounterFilter do
           output_tag foo
         ]
       end
-      before do
-        Fluentd::Plugin::Engine.stub(:now).and_return(time)
-        Fluentd::Plugin::Engine.should_receive(:emit).with("foo", time, {"count"=>3,
-          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"],
-          "input_tag" => tag,
-          "input_tag_last" => tag.split('.').last,
-        })
+      it 'should emit_and_flush with speficied tag' do
+        expect(emit_and_flush).to have_key("foo")
       end
-      it { emit }
     end
 
     context 'add_tag_prefix' do
@@ -203,43 +197,29 @@ describe Fluentd::Plugin::GrepCounterFilter do
           add_tag_prefix foo
         ]
       end
-      before do
-        Fluentd::Plugin::Engine.stub(:now).and_return(time)
-        Fluentd::Plugin::Engine.should_receive(:emit).with("foo.#{tag}", time, {"count"=>3,
-          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"],
-          "input_tag" => tag,
-          "input_tag_last" => tag.split('.').last,
-        })
+      it 'should emit_and_flush by adding specified tag prefix' do
+        expect(emit_and_flush).to have_key("foo.#{tag}")
       end
-      it { emit }
     end
 
     context 'output_with_joined_delimiter' do
       let(:config) do
-        # \\n shall be \n in config file
         CONFIG + %[
           regexp WARN
-          output_with_joined_delimiter \\n
+          output_with_joined_delimiter "\n"
         ]
       end
-      before do
-        Fluentd::Plugin::Engine.stub(:now).and_return(time)
-        Fluentd::Plugin::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>3, 
-          "message"=>"2013/01/13T07:02:13.232645 WARN POST /auth\\n2013/01/13T07:02:21.542145 WARN GET /favicon.ico\\n2013/01/13T07:02:43.632145 WARN POST /login",
-          "input_tag" => tag,
-          "input_tag_last" => tag.split('.').last,
-        })
+      it 'should output with joined delimiter' do
+        record = emit_and_flush["count.#{tag}"].first.record
+        expect(record["count"]).to eql(3)
+        expect(record["message"]).to be_kind_of(String)
+        expect(record["input_tag"]).to eql(tag)
+        expect(record["input_tag_last"]).to eql(tag.split('.').last)
+        expect(record["message"]).to include("\n")
       end
-      it { emit }
     end
 
     context 'aggregate all' do
-      let(:emit) do
-        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar') } }
-        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar2') } }
-        driver.instance.flush_emit(0)
-      end
-
       let(:config) do
         CONFIG + %[
           regexp WARN
@@ -247,13 +227,16 @@ describe Fluentd::Plugin::GrepCounterFilter do
           output_tag count
         ]
       end
-      before do
-        Fluentd::Plugin::Engine.stub(:now).and_return(time)
-        Fluentd::Plugin::Engine.should_receive(:emit).with("count", time, {"count"=>3*2,
-          "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"]*2,
-        })
+      it 'should aggreagate all' do
+        driver = create_driver
+        emit(driver, 'foo.bar')
+        emit(driver, 'foo.bar2')
+        record = flush(driver)["count"].first.record
+        expect(record["count"]).to eql(3*2)
+        expect(record["message"].size).to eql(3*2)
+        expect(record["message"]).to be_kind_of(Array)
+        record["message"].each {|message| expect(message).to include('WARN') }
       end
-      it { emit }
     end
 
     context 'replace_invalid_sequence' do
@@ -268,10 +251,9 @@ describe Fluentd::Plugin::GrepCounterFilter do
           "\xff".force_encoding('UTF-8'),
         ]
       end
-      before do
-        Fluentd::Plugin::Engine.stub(:now).and_return(time)
+      it 'should replace invalid byte sequences' do
+        expect { emit_and_flush }.not_to raise_error
       end
-      it { expect { emit }.not_to raise_error(ArgumentError) }
     end
 
     describe "comparator <=" do
@@ -280,18 +262,12 @@ describe Fluentd::Plugin::GrepCounterFilter do
           CONFIG + %[
           regexp WARN
           threshold 3
-          comparator <=
+          comparator "<="
           ]
         end
-        before do
-          Fluentd::Plugin::Engine.stub(:now).and_return(time)
-          Fluentd::Plugin::Engine.should_receive(:emit).with("count.#{tag}", time, {"count"=>3,
-            "message"=>["2013/01/13T07:02:13.232645 WARN POST /auth","2013/01/13T07:02:21.542145 WARN GET /favicon.ico","2013/01/13T07:02:43.632145 WARN POST /login"],
-            "input_tag" => tag,
-            "input_tag_last" => tag.split('.').last,
-          })
+        it 'should emit' do
+          expect(emit_and_flush).to have_key("count.#{tag}")
         end
-        it { emit }
       end
 
       context 'threshold (miss)' do
@@ -299,17 +275,14 @@ describe Fluentd::Plugin::GrepCounterFilter do
           CONFIG + %[
           regexp WARN
           threshold 2
-          comparator <=
+          comparator "<="
           ]
         end
-        before do
-          Fluentd::Plugin::Engine.stub(:now).and_return(time)
-          Fluentd::Plugin::Engine.should_not_receive(:emit)
+        it 'should not emit' do
+          expect(emit_and_flush).not_to have_key("count.#{tag}")
         end
-        it { emit }
       end
     end
-=end
   end
 
 end
