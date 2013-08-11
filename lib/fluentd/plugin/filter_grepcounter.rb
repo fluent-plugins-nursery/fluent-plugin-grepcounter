@@ -1,6 +1,6 @@
 # encoding: UTF-8
-class Fluent::GrepCounterOutput < Fluent::Output
-  Fluent::Plugin.register_output('grepcounter', self)
+class Fluentd::Plugin::GrepCounterFilter < Fluentd::Plugin::Filter
+  Fluentd::Plugin.register_filter('grepcounter', self)
 
   config_param :input_key, :string
   config_param :regexp, :string, :default => nil
@@ -27,18 +27,18 @@ class Fluent::GrepCounterOutput < Fluent::Output
     @threshold = @threshold.to_i
 
     unless ['>=', '<='].include?(@comparator)
-      raise Fluent::ConfigError, "grepcounter: comparator allows >=, <="
+      raise Fluentd::ConfigError, "grepcounter: comparator allows >=, <="
     end
 
     unless ['tag', 'all'].include?(@aggregate)
-      raise Fluent::ConfigError, "grepcounter: aggregate allows tag/all"
+      raise Fluentd::ConfigError, "grepcounter: aggregate allows tag/all"
     end
 
     case @aggregate
     when 'all'
-      raise Fluent::ConfigError, "grepcounter: output_tag must be specified with aggregate all" if @output_tag.nil?
+      raise Fluentd::ConfigError, "grepcounter: output_tag must be specified with aggregate all" if @output_tag.nil?
     when 'tag'
-      # raise Fluent::ConfigError, "grepcounter: add_tag_prefix must be specified with aggregate tag" if @add_tag_prefix.nil?
+      # raise Fluentd::ConfigError, "grepcounter: add_tag_prefix must be specified with aggregate tag" if @add_tag_prefix.nil?
     end
 
     @matches = {}
@@ -58,15 +58,17 @@ class Fluent::GrepCounterOutput < Fluent::Output
   end
 
   # Called when new line comes. This method actually does not emit
-  def emit(tag, es, chain)
+  def emits(tag, es)
     count = 0; matches = []
     # filter out and insert
-    es.each do |time,record|
-      value = record[@input_key]
-      next unless match(value.to_s)
-      matches << value
-      count += 1
-    end
+    es.each {|time,record|
+      handle_error(tag, time, record) {
+        value = record[@input_key]
+        return unless match(value.to_s)
+        matches << value
+        count += 1
+      }
+    }
     # thread safe merge
     @counts[tag] ||= 0
     @matches[tag] ||= []
@@ -74,33 +76,35 @@ class Fluent::GrepCounterOutput < Fluent::Output
       @counts[tag] += count
       @matches[tag] += matches
     end
-
-    chain.next
   rescue => e
-    $log.warn "grepcounter: #{e.class} #{e.message} #{e.backtrace.first}"
+    log.warn "grepcounter: #{e.class} #{e.message} #{e.backtrace.first}"
+  end
+
+  # empty implementation to avoid NoImplementationError
+  def emit(tag, time, record)
   end
 
   # thread callback
   def watcher
     # instance variable, and public accessable, for test
-    @last_checked = Fluent::Engine.now
+    @last_checked = Time.now.to_i
     while true
       sleep 0.5
       begin
-        if Fluent::Engine.now - @last_checked >= @count_interval
-          now = Fluent::Engine.now
+        if Time.now.to_i - @last_checked >= @count_interval
+          now = Time.now.to_i
           flush_emit(now - @last_checked)
           @last_checked = now
         end
       rescue => e
-        $log.warn "grepcounter: #{e.class} #{e.message} #{e.backtrace.first}"
+        log.warn "grepcounter: #{e.class} #{e.message} #{e.backtrace.first}"
       end
     end
   end
 
   # This method is the real one to emit
   def flush_emit(step)
-    time = Fluent::Engine.now
+    time = Time.now.to_i
     flushed_counts, flushed_matches, @counts, @matches = @counts, @matches, {}, {}
 
     if @aggregate == 'all'
@@ -110,14 +114,14 @@ class Fluent::GrepCounterOutput < Fluent::Output
         matches += flushed_matches[tag]
       end
       output = generate_output(count, matches)
-      Fluent::Engine.emit(@output_tag, time, output) if output
+      collector.emit(@output_tag, time, output) if output
     else
       flushed_counts.keys.each do |tag|
         count = flushed_counts[tag]
         matches = flushed_matches[tag]
         output = generate_output(count, matches, tag)
         tag = @output_tag ? @output_tag : "#{@add_tag_prefix}.#{tag}"
-        Fluent::Engine.emit(tag, time, output) if output
+        collector.emit(tag, time, output) if output
       end
     end
   end
