@@ -294,6 +294,37 @@ describe Fluent::GrepCounterOutput do
         it { emit }
       end
     end
+
+    describe "store_file" do
+      let(:store_file) do
+        dirname = "tmp"
+        Dir.mkdir dirname unless Dir.exist? dirname
+        filename = "#{dirname}/test.dat"
+        File.unlink filename if File.exist? filename
+        filename
+      end
+
+      let(:config) do
+        CONFIG + %[
+          store_file #{store_file}
+          ]
+      end
+
+      it 'stored_data and loaded_data should equal' do
+        driver.run { messages.each {|message| driver.emit({'message' => message}, time) } }
+        stored_counts = driver.instance.instance_variable_get(:@counts)
+        stored_matches = driver.instance.instance_variable_get(:@matches)
+        driver.instance.shutdown
+
+        driver.instance.start
+        loaded_counts = driver.instance.instance_variable_get(:@counts)
+        loaded_matches = driver.instance.instance_variable_get(:@matches)
+
+        loaded_counts.should == stored_counts
+        loaded_matches.should == stored_matches
+      end
+    end
+
   end
 end
 

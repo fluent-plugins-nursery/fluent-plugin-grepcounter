@@ -13,6 +13,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :output_with_joined_delimiter, :string, :default => nil
   config_param :aggregate, :string, :default => 'tag'
   config_param :replace_invalid_sequence, :bool, :default => false
+  config_param :store_file, :string, :default => nil
 
   attr_accessor :matches
   attr_accessor :last_checked
@@ -41,6 +42,13 @@ class Fluent::GrepCounterOutput < Fluent::Output
       # raise Fluent::ConfigError, "grepcounter: add_tag_prefix must be specified with aggregate tag" if @add_tag_prefix.nil?
     end
 
+    if @store_file
+      f = Pathname.new(@store_file)
+      if (f.exist? && !f.writable_real?) || (!f.exist? && !f.parent.writable_real?)
+        raise Fluent::ConfigError, "#{@store_file} is not writable"
+      end
+    end
+
     @matches = {}
     @counts  = {}
     @mutex = Mutex.new
@@ -48,6 +56,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
 
   def start
     super
+    load_from_file
     @watcher = Thread.new(&method(:watcher))
   end
 
@@ -55,6 +64,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
     super
     @watcher.terminate
     @watcher.join
+    store_to_file
   end
 
   # Called when new line comes. This method actually does not emit
@@ -157,4 +167,44 @@ class Fluent::GrepCounterOutput < Fluent::Output
     temporal_encoding = (original_encoding == Encoding::UTF_8 ? Encoding::UTF_16BE : Encoding::UTF_8)
     string.encode(temporal_encoding, original_encoding, replace_options).encode(original_encoding)
   end
+
+  def store_to_file
+    return unless @store_file
+
+    begin
+      Pathname.new(@store_file).open('wb') do |f|
+        Marshal.dump({
+          :counts           => @counts,
+          :matches          => @matches,
+          :regexp           => @regexp,
+          :exclude          => @exclude,
+          :input_key        => @input_key,
+        }, f)
+      end
+    rescue => e
+      $log.warn "out_grepcounter: Can't write store_file #{e.class} #{e.message}"
+    end
+  end
+
+  def load_from_file
+    return unless @store_file
+    return unless (f = Pathname.new(@store_file)).exist?
+
+    begin
+      f.open('rb') do |f|
+        stored = Marshal.load(f)
+        if stored[:regexp] == @regexp and
+          stored[:exclude] == @exclude and
+          stored[:input_key]  == @input_key
+          @counts = stored[:counts]
+          @matches = stored[:matches]
+        else
+          $log.warn "out_grepcounter: configuration param was changed. ignore stored data"
+        end
+      end
+    rescue => e
+      $log.warn "out_grepcounter: Can't load store_file #{e.class} #{e.message}"
+    end
+  end
+
 end
