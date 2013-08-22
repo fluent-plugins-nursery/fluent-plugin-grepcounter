@@ -15,7 +15,9 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :replace_invalid_sequence, :bool, :default => false
   config_param :store_file, :string, :default => nil
 
+  attr_accessor :counts
   attr_accessor :matches
+  attr_accessor :passed_time
   attr_accessor :last_checked
 
   def configure(conf)
@@ -94,6 +96,8 @@ class Fluent::GrepCounterOutput < Fluent::Output
   def watcher
     # instance variable, and public accessable, for test
     @last_checked = Fluent::Engine.now
+    # skip the passed time when loading @counts form file
+    @last_checked -= @passed_time if @passed_time
     while true
       sleep 0.5
       begin
@@ -173,9 +177,11 @@ class Fluent::GrepCounterOutput < Fluent::Output
 
     begin
       Pathname.new(@store_file).open('wb') do |f|
+        @passed_time = Fluent::Engine.now - @last_checked
         Marshal.dump({
           :counts           => @counts,
           :matches          => @matches,
+          :passed_time      => @passed_time,
           :regexp           => @regexp,
           :exclude          => @exclude,
           :input_key        => @input_key,
@@ -198,6 +204,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
           stored[:input_key]  == @input_key
           @counts = stored[:counts]
           @matches = stored[:matches]
+          @passed_time = stored[:passed_time]
         else
           $log.warn "out_grepcounter: configuration param was changed. ignore stored data"
         end
