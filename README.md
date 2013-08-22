@@ -103,7 +103,7 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 
 - store\_file
 
-    Store internal count data on shutdown, and load on statring. 
+    Store internal count data into a file of the given path on shutdown, and load on statring. 
 
 ## ChangeLog
 
