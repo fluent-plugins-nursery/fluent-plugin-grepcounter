@@ -11,8 +11,12 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :regexp, :string, :default => nil
   config_param :count_interval, :time, :default => 5
   config_param :exclude, :string, :default => nil
-  config_param :threshold, :integer, :default => 1
-  config_param :comparator, :string, :default => '>='
+  config_param :threshold, :integer, :default => nil # obsolete
+  config_param :comparator, :string, :default => '>=' # obsolete
+  config_param :less_than, :float, :default => nil
+  config_param :less_equal, :float, :default => nil
+  config_param :greater_than, :float, :default => nil
+  config_param :greater_equal, :float, :default => nil
   config_param :output_tag, :string, :default => nil
   config_param :add_tag_prefix, :string, :default => 'count'
   config_param :output_with_joined_delimiter, :string, :default => nil
@@ -33,10 +37,23 @@ class Fluent::GrepCounterOutput < Fluent::Output
     @input_key = @input_key.to_s
     @regexp = Regexp.compile(@regexp) if @regexp
     @exclude = Regexp.compile(@exclude) if @exclude
-    @threshold = @threshold.to_i
+
+    @threshold = @threshold.to_i if @threshold
 
     unless ['>=', '<='].include?(@comparator)
       raise Fluent::ConfigError, "grepcounter: comparator allows >=, <="
+    end
+
+    # to support obsolete options
+    if @threshold.nil? and @less_than.nil? and @less_equal.nil? and @greater_than.nil? and @greater_equal.nil?
+      @threshold = 1
+    end
+    if @threshold and @comparator
+      if @comparator == '>='
+        @greater_equal = @threshold
+      else
+        @less_equal = @threshold
+      end
     end
 
     unless ['tag', 'all'].include?(@aggregate)
@@ -143,7 +160,10 @@ class Fluent::GrepCounterOutput < Fluent::Output
   def generate_output(count, matches, tag = nil)
     return nil if count.nil?
     return nil if count == 0 # ignore 0 because standby nodes receive no message usually
-    return nil unless eval("#{count} #{@comparator} #{@threshold}")
+    return nil if @less_than     and @less_than   <= count
+    return nil if @less_equal    and @less_equal  <  count
+    return nil if @greater_than  and count <= @greater_than
+    return nil if @greater_equal and count <  @greater_equal
     output = {}
     output['count'] = count
     output['message'] = @output_with_joined_delimiter.nil? ? matches : matches.join(@output_with_joined_delimiter)
