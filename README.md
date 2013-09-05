@@ -72,22 +72,30 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 
     The excluding regular expression like grep -v
 
-- threshold
+- threshold (obsolete. Use greater\_equal instead)
 
     The threshold number to emit
 
-- comparator
+- comparator (obsolete. Use greater\_equal or less\_equal instead)
 
     The comparation operator for the threshold (either of `>=` or `<=`). Default is `>=`, i.e., emit if count >= threshold. 
     NOTE: 0 count message will not be emitted even if `<=` is specified because standby nodes receive no message usually.
 
-- output\_with\_joined\_delimiter
+- less\_than
 
-    Join the output message array field with the specified delimiter to make the output message be a string. 
+    A `less than` threshold value, that is, emit if `count` value < specified value.
 
-- aggregate
+- less\_equal
 
-    Count by each `tag` or `all`. The default value is `tag`. 
+    A `less than or eqaul` threshold value, that is, emit if `count` value <= specified value.
+
+- greater\_than
+
+    A `greater than` threshold value, that is, emit if `count` value > specified value. 
+
+- greater\_equal
+
+    A `greater than or eqaul` threshold value, that is, emit if `count` value >= specified value. 
 
 - output\_tag
 
@@ -96,6 +104,10 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 - add\_tag\_prefix
 
     Add tag prefix for output message
+
+- output\_with\_joined\_delimiter
+
+    Output matched messages after `join`ed with the specified delimiter.
 
 - replace\_invalid\_sequence
 

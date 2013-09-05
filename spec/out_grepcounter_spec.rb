@@ -124,72 +124,161 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
-    context 'threshold (hit)' do
-      let(:config) { CONFIG + %[regexp WARN \n threshold 3] }
-      before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge({
-          "count"=>3,
-          "message"=>[
-            "2013/01/13T07:02:13.232645 WARN POST /auth",
-            "2013/01/13T07:02:21.542145 WARN GET /favicon.ico",
-            "2013/01/13T07:02:43.632145 WARN POST /login"
-          ],
-        }))
+    context "threshold and comparator" do
+      context '>= threshold' do
+        let(:config) { CONFIG + %[threshold 4] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+        end
+        it { emit }
       end
-      it { emit }
+
+      context 'not >= threshold' do
+        let(:config) { CONFIG + %[threshold 5] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_not_receive(:emit)
+        end
+        it { emit }
+      end
+
+      context '<= threshold' do
+        let(:config) { CONFIG + %[threshold 4 \n comparator <=] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+        end
+        it { emit }
+      end
+
+      context 'not <= threshold' do
+        let(:config) { CONFIG + %[threshold 3 \n comparator <=] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_not_receive(:emit)
+        end
+        it { emit }
+      end
     end
 
-    context 'threshold (miss)' do
-      let(:config) { CONFIG + %[regexp WARN \n threshold 4] }
-      before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_not_receive(:emit)
+    context "less|greater_than|equal" do
+      context 'greater_equal' do
+        let(:config) { CONFIG + %[greater_equal 4] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+        end
+        it { emit }
       end
-      it { emit }
+
+      context 'not greater_equal' do
+        let(:config) { CONFIG + %[greater_equal 5] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_not_receive(:emit)
+        end
+        it { emit }
+      end
+
+      context 'greater_than' do
+        let(:config) { CONFIG + %[greater_than 3] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+        end
+        it { emit }
+      end
+
+      context 'not greater_than' do
+        let(:config) { CONFIG + %[greater_than 4] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_not_receive(:emit)
+        end
+        it { emit }
+      end
+
+      context 'less_equal' do
+        let(:config) { CONFIG + %[less_equal 4] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+        end
+        it { emit }
+      end
+
+      context 'not less_equal' do
+        let(:config) { CONFIG + %[less_equal 3] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_not_receive(:emit)
+        end
+        it { emit }
+      end
+
+      context 'less_than' do
+        let(:config) { CONFIG + %[less_than 5] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+        end
+        it { emit }
+      end
+
+      context 'not less_than' do
+        let(:config) { CONFIG + %[less_than 4] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_not_receive(:emit)
+        end
+        it { emit }
+      end
+
+      context 'between' do
+        let(:config) { CONFIG + %[greater_than 1 \n less_than 5] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+        end
+        it { emit }
+      end
+
+      context 'not between' do
+        let(:config) { CONFIG + %[greater_than 1 \n less_than 4] }
+        before do
+          Fluent::Engine.stub(:now).and_return(time)
+          Fluent::Engine.should_not_receive(:emit)
+        end
+        it { emit }
+      end
     end
 
     context 'output_tag' do
-      let(:config) { CONFIG + %[regexp WARN \n output_tag foo] }
+      let(:config) { CONFIG + %[output_tag foo] }
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("foo", time, expected.merge({
-          "count"=>3,
-          "message"=>[
-            "2013/01/13T07:02:13.232645 WARN POST /auth",
-            "2013/01/13T07:02:21.542145 WARN GET /favicon.ico",
-            "2013/01/13T07:02:43.632145 WARN POST /login"
-          ],
-        }))
+        Fluent::Engine.should_receive(:emit).with("foo", time, expected)
       end
       it { emit }
     end
 
     context 'add_tag_prefix' do
-      let(:config) { CONFIG + %[regexp WARN \n add_tag_prefix foo] }
+      let(:config) { CONFIG + %[add_tag_prefix foo] }
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("foo.#{tag}", time, expected.merge({
-          "count"=>3,
-          "message"=>[
-            "2013/01/13T07:02:13.232645 WARN POST /auth",
-            "2013/01/13T07:02:21.542145 WARN GET /favicon.ico",
-            "2013/01/13T07:02:43.632145 WARN POST /login"
-          ],
-        }))
+        Fluent::Engine.should_receive(:emit).with("foo.#{tag}", time, expected)
       end
       it { emit }
     end
 
     context 'output_with_joined_delimiter' do
       # \\n shall be \n in config file
-      let(:config) { CONFIG + %[regexp WARN \n output_with_joined_delimiter \\n] }
+      let(:config) { CONFIG + %[output_with_joined_delimiter \\n] }
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge({
-          "count"=>3, 
-          "message"=>"2013/01/13T07:02:13.232645 WARN POST /auth\\n2013/01/13T07:02:21.542145 WARN GET /favicon.ico\\n2013/01/13T07:02:43.632145 WARN POST /login",
-        }))
+        message = expected["message"].join('\n')
+        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
       end
       it { emit }
     end
@@ -223,33 +312,6 @@ describe Fluent::GrepCounterOutput do
         Fluent::Engine.stub(:now).and_return(time)
       end
       it { expect { emit }.not_to raise_error }
-    end
-
-    describe "comparator <=" do
-      context 'threshold (hit)' do
-        let(:config) { CONFIG + %[regexp WARN \n threshold 3 \n comparator <=] }
-        before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge({
-            "count"=>3,
-            "message"=>[
-              "2013/01/13T07:02:13.232645 WARN POST /auth",
-              "2013/01/13T07:02:21.542145 WARN GET /favicon.ico",
-              "2013/01/13T07:02:43.632145 WARN POST /login"
-            ],
-          }))
-        end
-        it { emit }
-      end
-
-      context 'threshold (miss)' do
-        let(:config) { CONFIG + %[regexp WARN \n threshold 2 \n comparator <=] }
-        before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_not_receive(:emit)
-        end
-        it { emit }
-      end
     end
 
     describe "store_file" do
