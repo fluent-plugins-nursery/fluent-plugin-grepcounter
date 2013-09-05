@@ -284,23 +284,23 @@ describe Fluent::GrepCounterOutput do
     end
 
     context 'aggregate all' do
+      let(:messages) { ['foobar', 'foobar'] }
       let(:emit) do
         driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar') } }
         driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar2') } }
         driver.instance.flush_emit(0)
       end
+      let(:expected) do
+        {
+          "count"=>messages.size*2,
+          "message"=>messages*2,
+        }
+      end
 
-      let(:config) { CONFIG + %[regexp WARN \n aggregate all \n output_tag count] }
+      let(:config) { CONFIG + %[aggregate all \n output_tag count] }
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count", time, {
-          "count"=>3*2,
-          "message"=>[
-            "2013/01/13T07:02:13.232645 WARN POST /auth",
-            "2013/01/13T07:02:21.542145 WARN GET /favicon.ico",
-            "2013/01/13T07:02:43.632145 WARN POST /login"
-          ]*2,
-        })
+        Fluent::Engine.should_receive(:emit).with("count", time, expected)
       end
       it { emit }
     end
