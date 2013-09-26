@@ -72,30 +72,30 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 
     The excluding regular expression like grep -v
 
-- threshold (obsolete. Use greater\_equal instead)
+- threshold
 
-    The threshold number to emit
+    The threshold number to emit. Emit if `count` value >= specified value.
 
-- comparator (obsolete. Use greater\_equal or less\_equal instead)
+- comparator (obsolete from 0.2.0. Use greater\_equal or less\_equal instead)
 
     The comparation operator for the threshold (either of `>=` or `<=`). Default is `>=`, i.e., emit if count >= threshold. 
     NOTE: 0 count message will not be emitted even if `<=` is specified because standby nodes receive no message usually.
 
-- less\_than
+- less\_than (from 0.2.0)
 
     A `less than` threshold value, that is, emit if `count` value < specified value.
 
-- less\_equal
+- less\_equal (from 0.2.0)
 
     A `less than or eqaul` threshold value, that is, emit if `count` value <= specified value.
 
-- greater\_than
+- greater\_than (from 0.2.0)
 
     A `greater than` threshold value, that is, emit if `count` value > specified value. 
 
-- greater\_equal
+- greater\_equal (from 0.2.0)
 
-    A `greater than or eqaul` threshold value, that is, emit if `count` value >= specified value. 
+    A `greater than or eqaul` threshold value, that is, emit if `count` value >= specified value. Same with `threshold` option.
 
 - output\_tag
 
