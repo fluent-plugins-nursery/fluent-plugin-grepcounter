@@ -1,4 +1,10 @@
-## 0.1.3 (20130617)
+## 0.2.0 (2013/09/26)
+
+Features
+
+  - less_than, less_equal, greater_than, greater_equal
+
+## 0.1.3 (2013/06/17)
 
 Features
 
