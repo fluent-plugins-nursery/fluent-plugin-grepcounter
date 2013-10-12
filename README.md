@@ -32,7 +32,10 @@ Then, output bocomes as belows (indented):
       "input_tag_last":"host1",
     }
 
-Another example of grepcounter configuration to use `output_with_joined_delimiter`:
+### output_with_joined_delimiter
+
+As default, the `grepcounter` plugin outputs matched `message` as an array as shown above. 
+You may want to output `message` as a string, then use `output_with_joined_delimiter` option like:
 
     <match syslog.**>
       type grepcounter
