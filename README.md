@@ -81,6 +81,14 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
     The comparation operator for the threshold (either of `>=` or `<=`). Default is `>=`, i.e., emit if count >= threshold. 
     NOTE: 0 count message will not be emitted even if `<=` is specified because standby nodes receive no message usually.
 
+- greater\_equal (from 0.2.0)
+
+    This is same with `threshold` option. A `greater than or eqaul` threshold value, that is, emit if `count` value >= specified value. 
+    
+- greater\_than (from 0.2.0)
+
+    A `greater than` threshold value, that is, emit if `count` value > specified value. 
+
 - less\_than (from 0.2.0)
 
     A `less than` threshold value, that is, emit if `count` value < specified value.
@@ -88,14 +96,6 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 - less\_equal (from 0.2.0)
 
     A `less than or eqaul` threshold value, that is, emit if `count` value <= specified value.
-
-- greater\_than (from 0.2.0)
-
-    A `greater than` threshold value, that is, emit if `count` value > specified value. 
-
-- greater\_equal (from 0.2.0)
-
-    A `greater than or eqaul` threshold value, that is, emit if `count` value >= specified value. Same with `threshold` option.
 
 - output\_tag
 
