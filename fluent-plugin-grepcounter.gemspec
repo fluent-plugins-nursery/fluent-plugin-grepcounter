@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Naotoshi SEO"]
   s.email       = ["sonots@gmail.com"]
   s.homepage    = "https://github.com/sonots/fluent-plugin-grepcounter"
-  s.summary     = "Count the number of matched messages"
+  s.summary     = "Fluentd plugin to count the number of matched messages, and emit if exeeds the threshold"
   s.description = s.summary
 
   s.rubyforge_project = "fluent-plugin-grepcounter"
