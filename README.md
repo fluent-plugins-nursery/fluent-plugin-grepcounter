@@ -83,19 +83,19 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 
 - greater\_equal (from 0.2.0)
 
-    This is same with `threshold` option. A `greater than or eqaul` threshold value, that is, emit if `count` value >= specified value. 
+    This is same with `threshold` option. Emit if `count` value is greater than or equal to (>=) specified value. 
     
 - greater\_than (from 0.2.0)
 
-    A `greater than` threshold value, that is, emit if `count` value > specified value. 
-
+    Emit if `count` value is greater than (>) specified value. 
+    
 - less\_than (from 0.2.0)
 
-    A `less than` threshold value, that is, emit if `count` value < specified value.
+    Emit if `count` value is less than (<) specified value. 
 
 - less\_equal (from 0.2.0)
 
-    A `less than or eqaul` threshold value, that is, emit if `count` value <= specified value.
+    Emit if `count` value is less than or equal to (<=) specified value. 
 
 - output\_tag
 
