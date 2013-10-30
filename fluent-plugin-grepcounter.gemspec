@@ -9,6 +9,7 @@ Gem::Specification.new do |s|
   s.homepage    = "https://github.com/sonots/fluent-plugin-grepcounter"
   s.summary     = "Fluentd plugin to count the number of matched messages, and emit if exeeds the threshold"
   s.description = s.summary
+  s.licenses    = ["MIT"]
 
   s.rubyforge_project = "fluent-plugin-grepcounter"
 
