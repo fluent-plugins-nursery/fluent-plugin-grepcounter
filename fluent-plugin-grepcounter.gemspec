@@ -19,7 +19,6 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_runtime_dependency "fluentd"
-  s.add_runtime_dependency "string-scrub"
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec"
   s.add_development_dependency "pry"
