@@ -1,3 +1,9 @@
+## 0.3.1 (2013/11/02)
+
+Changes
+
+  - Revert 0.3.0. `string-scrub` gem is only for >= ruby 2.0.
+
 ## 0.3.0 (2013/11/02)
 
 Changes

@@ -10,3 +10,5 @@ doc/*
 tmp/*
 coverage
 .yardoc
+.ruby-version
+pkg/*
