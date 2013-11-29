@@ -1,3 +1,10 @@
+## 0.4.0 (2013/11/30)
+
+Changes
+
+  - Change the option name `output_tag` to `tag`. `output_tag` is obsolete.
+  - Change the option name `output_with_joined_delimiter` to `delimiter`. `output_with_joined_delimiter` is obsolete.
+
 ## 0.3.1 (2013/11/02)
 
 Changes
