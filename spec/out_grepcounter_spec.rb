@@ -50,7 +50,7 @@ describe Fluent::GrepCounterOutput do
         its(:exclude) { should be_nil }
         its(:threshold) { should == 1 }
         its(:comparator) { should == '>=' }
-        its(:output_tag) { should be_nil }
+        its(:tag) { should be_nil }
         its(:add_tag_prefix) { should == 'count' }
       end
     end
@@ -124,7 +124,7 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
-    context "threshold and comparator" do
+    context "threshold and comparator (obsolete)" do
       context '>= threshold' do
         let(:config) { CONFIG + %[threshold 4] }
         before do
@@ -162,7 +162,7 @@ describe Fluent::GrepCounterOutput do
       end
     end
 
-    context "less|greater_than|equal" do
+    context "less and greater" do
       context 'greater_equal' do
         let(:config) { CONFIG + %[greater_equal 4] }
         before do
@@ -254,8 +254,17 @@ describe Fluent::GrepCounterOutput do
       end
     end
 
-    context 'output_tag' do
+    context 'output_tag (obsolete)' do
       let(:config) { CONFIG + %[output_tag foo] }
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        Fluent::Engine.should_receive(:emit).with("foo", time, expected)
+      end
+      it { emit }
+    end
+
+    context 'tag' do
+      let(:config) { CONFIG + %[tag foo] }
       before do
         Fluent::Engine.stub(:now).and_return(time)
         Fluent::Engine.should_receive(:emit).with("foo", time, expected)
@@ -272,9 +281,20 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
-    context 'output_with_joined_delimiter' do
+    context 'output_with_joined_delimiter (obsolete)' do
       # \\n shall be \n in config file
       let(:config) { CONFIG + %[output_with_joined_delimiter \\n] }
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        message = expected["message"].join('\n')
+        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
+      end
+      it { emit }
+    end
+
+    context 'delimiter' do
+      # \\n shall be \n in config file
+      let(:config) { CONFIG + %[delimiter \\n] }
       before do
         Fluent::Engine.stub(:now).and_return(time)
         message = expected["message"].join('\n')

@@ -17,9 +17,11 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :less_equal, :float, :default => nil
   config_param :greater_than, :float, :default => nil
   config_param :greater_equal, :float, :default => nil
-  config_param :output_tag, :string, :default => nil
+  config_param :output_tag, :string, :default => nil # obsolete
+  config_param :tag, :string, :default => nil
   config_param :add_tag_prefix, :string, :default => 'count'
-  config_param :output_with_joined_delimiter, :string, :default => nil
+  config_param :output_with_joined_delimiter, :string, :default => nil # obsolete
+  config_param :delimiter, :string, :default => nil
   config_param :aggregate, :string, :default => 'tag'
   config_param :replace_invalid_sequence, :bool, :default => false
   config_param :store_file, :string, :default => nil
@@ -44,7 +46,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
       raise Fluent::ConfigError, "grepcounter: comparator allows >=, <="
     end
 
-    # to support obsolete options
+    # to support obsolete `threshold` and `comparator` options
     if @threshold.nil? and @less_than.nil? and @less_equal.nil? and @greater_than.nil? and @greater_equal.nil?
       @threshold = 1
     end
@@ -55,6 +57,12 @@ class Fluent::GrepCounterOutput < Fluent::Output
         @less_equal = @threshold
       end
     end
+
+    # to support osolete `output_tag` option
+    @tag = @output_tag if !@tag and @output_tag
+
+    # to support obsolete `output_with_joined_delimiter` option
+    @delimiter = @output_with_joined_delimiter if !@delimiter and @output_with_joined_delimiter
 
     unless ['tag', 'all'].include?(@aggregate)
       raise Fluent::ConfigError, "grepcounter: aggregate allows tag/all"
@@ -145,13 +153,13 @@ class Fluent::GrepCounterOutput < Fluent::Output
         matches += flushed_matches[tag]
       end
       output = generate_output(count, matches)
-      Fluent::Engine.emit(@output_tag, time, output) if output
+      Fluent::Engine.emit(@tag, time, output) if output
     else
       flushed_counts.keys.each do |tag|
         count = flushed_counts[tag]
         matches = flushed_matches[tag]
         output = generate_output(count, matches, tag)
-        tag = @output_tag ? @output_tag : "#{@add_tag_prefix}.#{tag}"
+        tag = @tag ? @tag : "#{@add_tag_prefix}.#{tag}"
         Fluent::Engine.emit(tag, time, output) if output
       end
     end
@@ -166,7 +174,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
     return nil if @greater_equal and count <  @greater_equal
     output = {}
     output['count'] = count
-    output['message'] = @output_with_joined_delimiter.nil? ? matches : matches.join(@output_with_joined_delimiter)
+    output['message'] = @delimiter.nil? ? matches : matches.join(@delimiter)
     if tag
       output['input_tag'] = tag
       output['input_tag_last'] = tag.split('.').last
