@@ -32,7 +32,7 @@ Then, output bocomes as belows (indented):
       "input_tag_last":"host1",
     }
 
-### output_with_joined_delimiter
+### Output message by joining with a delimiter
 
 As default, the `grepcounter` plugin outputs matched `message` as an array as shown above. 
 You may want to output `message` as a string, then use `delimiter` option like:
