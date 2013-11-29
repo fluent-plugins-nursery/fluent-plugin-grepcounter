@@ -20,6 +20,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :output_tag, :string, :default => nil # obsolete
   config_param :tag, :string, :default => nil
   config_param :add_tag_prefix, :string, :default => 'count'
+  config_param :remove_tag_prefix, :string, :default => nil
   config_param :output_with_joined_delimiter, :string, :default => nil # obsolete
   config_param :delimiter, :string, :default => nil
   config_param :aggregate, :string, :default => 'tag'
@@ -81,6 +82,21 @@ class Fluent::GrepCounterOutput < Fluent::Output
         raise Fluent::ConfigError, "#{@store_file} is not writable"
       end
     end
+
+    @tag_prefix = "#{@add_tag_prefix}."
+    @tag_prefix_match = "#{@remove_tag_prefix}." if @remove_tag_prefix
+    @tag_proc =
+      if @tag
+        Proc.new {|tag| @tag }
+      elsif @tag_prefix and @tag_prefix_match
+        Proc.new {|tag| "#{@tag_prefix}#{lstrip(tag, @tag_prefix_match)}" }
+      elsif @tag_prefix_match
+        Proc.new {|tag| lstrip(tag, @tag_prefix_match) }
+      elsif @tag_prefix
+        Proc.new {|tag| "#{@tag_prefix}#{tag}" }
+      else
+        Proc.new {|tag| tag }
+      end
 
     @matches = {}
     @counts  = {}
@@ -159,8 +175,10 @@ class Fluent::GrepCounterOutput < Fluent::Output
         count = flushed_counts[tag]
         matches = flushed_matches[tag]
         output = generate_output(count, matches, tag)
-        tag = @tag ? @tag : "#{@add_tag_prefix}.#{tag}"
-        Fluent::Engine.emit(tag, time, output) if output
+        if output
+          emit_tag = @tag_proc.call(tag)
+          Fluent::Engine.emit(emit_tag, time, output)
+        end
       end
     end
   end
@@ -182,17 +200,18 @@ class Fluent::GrepCounterOutput < Fluent::Output
     output
   end
 
+  def lstrip(string, substring)
+    string.index(substring) == 0 ? string[substring.size..-1] : string
+  end
+
   def match(string)
     begin
       return false if @regexp and !@regexp.match(string)
       return false if @exclude and @exclude.match(string)
     rescue ArgumentError => e
-      unless e.message.index("invalid byte sequence in") == 0
-        raise
-      end
+      raise e unless e.message.index("invalid byte sequence in") == 0
       string = replace_invalid_byte(string)
-      return false if @regexp and !@regexp.match(string)
-      return false if @exclude and @exclude.match(string)
+      retry
     end
     return true
   end

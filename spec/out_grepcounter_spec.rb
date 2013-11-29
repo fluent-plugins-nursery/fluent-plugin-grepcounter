@@ -281,6 +281,15 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
+    context 'remove_tag_prefix' do
+      let(:config) { CONFIG + %[add_tag_prefix foo\nremove_tag_prefix syslog] }
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        Fluent::Engine.should_receive(:emit).with("foo.host1", time, expected)
+      end
+      it { emit }
+    end
+
     context 'output_with_joined_delimiter (obsolete)' do
       # \\n shall be \n in config file
       let(:config) { CONFIG + %[output_with_joined_delimiter \\n] }
