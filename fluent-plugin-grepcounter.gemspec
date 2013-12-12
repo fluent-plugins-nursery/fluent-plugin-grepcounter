@@ -3,11 +3,11 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "fluent-plugin-grepcounter"
-  s.version     = "0.4.1"
-  s.authors     = ["Naotoshi SEO"]
+  s.version     = "0.4.2"
+  s.authors     = ["Naotoshi Seo"]
   s.email       = ["sonots@gmail.com"]
   s.homepage    = "https://github.com/sonots/fluent-plugin-grepcounter"
-  s.summary     = "Fluentd plugin to count the number of matched messages, and emit if exeeds the threshold"
+  s.summary     = "Fluentd plugin to count the number of matched messages, and emit if exceeds the threshold"
   s.description = s.summary
   s.licenses    = ["MIT"]
 

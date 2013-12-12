@@ -1,3 +1,9 @@
+## 0.4.2 (2013/12/12)
+
+Features
+
+  - Allow to use `remove_tag_prefix` option alone
+
 ## 0.4.1 (2013/11/30)
 
 Features
