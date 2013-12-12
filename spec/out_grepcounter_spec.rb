@@ -282,10 +282,10 @@ describe Fluent::GrepCounterOutput do
     end
 
     context 'remove_tag_prefix' do
-      let(:config) { CONFIG + %[add_tag_prefix foo\nremove_tag_prefix syslog] }
+      let(:config) { CONFIG + %[remove_tag_prefix syslog] }
       before do
         Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("foo.host1", time, expected)
+        Fluent::Engine.should_receive(:emit).with("host1", time, expected)
       end
       it { emit }
     end

@@ -19,7 +19,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :greater_equal, :float, :default => nil
   config_param :output_tag, :string, :default => nil # obsolete
   config_param :tag, :string, :default => nil
-  config_param :add_tag_prefix, :string, :default => 'count'
+  config_param :add_tag_prefix, :string, :default => nil
   config_param :remove_tag_prefix, :string, :default => nil
   config_param :output_with_joined_delimiter, :string, :default => nil # obsolete
   config_param :delimiter, :string, :default => nil
@@ -83,7 +83,11 @@ class Fluent::GrepCounterOutput < Fluent::Output
       end
     end
 
-    @tag_prefix = "#{@add_tag_prefix}."
+    if @tag.nil? and @add_tag_prefix.nil? and @remove_tag_prefix.nil?
+      @add_tag_prefix = 'count' # not ConfigError to support lower version compatibility
+    end
+
+    @tag_prefix = "#{@add_tag_prefix}." if @add_tag_prefix
     @tag_prefix_match = "#{@remove_tag_prefix}." if @remove_tag_prefix
     @tag_proc =
       if @tag
