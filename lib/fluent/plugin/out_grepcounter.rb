@@ -2,16 +2,20 @@
 class Fluent::GrepCounterOutput < Fluent::Output
   Fluent::Plugin.register_output('grepcounter', self)
 
+  REGEXP_MAX_NUM = 20
+
   def initialize
     super
     require 'pathname'
   end
 
-  config_param :input_key, :string
+  config_param :input_key, :string, :default => nil
   config_param :regexp, :string, :default => nil
-  config_param :count_interval, :time, :default => 5
   config_param :exclude, :string, :default => nil
-  config_param :threshold, :integer, :default => nil # obsolete
+  (1..REGEXP_MAX_NUM).each {|i| config_param :"regexp#{i}",  :string, :default => nil }
+  (1..REGEXP_MAX_NUM).each {|i| config_param :"exclude#{i}", :string, :default => nil }
+  config_param :count_interval, :time, :default => 5
+  config_param :threshold, :integer, :default => nil # not obsolete, though
   config_param :comparator, :string, :default => '>=' # obsolete
   config_param :less_than, :float, :default => nil
   config_param :less_equal, :float, :default => nil
@@ -37,17 +41,40 @@ class Fluent::GrepCounterOutput < Fluent::Output
     super
 
     @count_interval = @count_interval.to_i
-    @input_key = @input_key.to_s
-    @regexp = Regexp.compile(@regexp) if @regexp
-    @exclude = Regexp.compile(@exclude) if @exclude
+
+    if @input_key
+      @regexp = Regexp.compile(@regexp) if @regexp
+      @exclude = Regexp.compile(@exclude) if @exclude
+    end
+
+    @regexps = {}
+    (1..REGEXP_MAX_NUM).each do |i|
+      next unless conf["regexp#{i}"]
+      key, regexp = conf["regexp#{i}"].split(/ /, 2)
+      raise Fluent::ConfigError, "regexp#{i} does not contain 2 parameters" unless regexp
+      raise Fluent::ConfigError, "regexp#{i} contains a duplicated key, #{key}" if @regexps[key]
+      @regexps[key] = Regexp.compile(regexp)
+    end
+
+    @excludes = {}
+    (1..REGEXP_MAX_NUM).each do |i|
+      next unless conf["exclude#{i}"]
+      key, exclude = conf["exclude#{i}"].split(/ /, 2)
+      raise Fluent::ConfigError, "exclude#{i} does not contain 2 parameters" unless exclude
+      raise Fluent::ConfigError, "exclude#{i} contains a duplicated key, #{key}" if @excludes[key]
+      @excludes[key] = Regexp.compile(exclude)
+    end
+
+    if @input_key and (!@regexps.empty? or !@excludes.empty?)
+      raise Fluent::ConfigError, "Classic style `input_key`, and new style `regexpN`, `excludeN` can not be used together"
+    end
 
     @threshold = @threshold.to_i if @threshold
 
+    # to support obsolete `threshold` and `comparator` options
     unless ['>=', '<='].include?(@comparator)
       raise Fluent::ConfigError, "grepcounter: comparator allows >=, <="
     end
-
-    # to support obsolete `threshold` and `comparator` options
     if @threshold.nil? and @less_than.nil? and @less_equal.nil? and @greater_than.nil? and @greater_equal.nil?
       @threshold = 1
     end
@@ -125,10 +152,23 @@ class Fluent::GrepCounterOutput < Fluent::Output
     count = 0; matches = []
     # filter out and insert
     es.each do |time,record|
-      value = record[@input_key]
-      next unless match(value.to_s)
-      matches << value
-      count += 1
+      catch(:break_loop) do
+        if key = @input_key
+          value = record[key].to_s
+          throw :break_loop if @regexp and !match(@regexp, value)
+          throw :break_loop if @exclude and match(@exclude, value)
+          matches << value # old style stores as an array of values
+        else
+          @regexps.each do |key, regexp|
+            throw :break_loop unless match(regexp, record[key].to_s)
+          end
+          @excludes.each do |key, exclude|
+            throw :break_loop if match(exclude, record[key].to_s)
+          end
+          matches << record # new style stores as an array of hashes, but how to utilize it?
+        end
+        count += 1
+      end
     end
     # thread safe merge
     @counts[tag] ||= 0
@@ -196,7 +236,12 @@ class Fluent::GrepCounterOutput < Fluent::Output
     return nil if @greater_equal and count <  @greater_equal
     output = {}
     output['count'] = count
-    output['message'] = @delimiter.nil? ? matches : matches.join(@delimiter)
+    if @input_key
+      output['message'] = @delimiter ? matches.join(@delimiter) : matches
+    else
+      # I will think of good format later...
+      output['message'] = @delimiter ? matches.map{|hash| hash.to_hash}.join(@delimiter) : matches
+    end
     if tag
       output['input_tag'] = tag
       output['input_tag_last'] = tag.split('.').last
@@ -208,10 +253,9 @@ class Fluent::GrepCounterOutput < Fluent::Output
     string.index(substring) == 0 ? string[substring.size..-1] : string
   end
 
-  def match(string)
+  def match(regexp, string)
     begin
-      return false if @regexp and !@regexp.match(string)
-      return false if @exclude and @exclude.match(string)
+      return regexp.match(string)
     rescue ArgumentError => e
       raise e unless e.message.index("invalid byte sequence in") == 0
       string = replace_invalid_byte(string)

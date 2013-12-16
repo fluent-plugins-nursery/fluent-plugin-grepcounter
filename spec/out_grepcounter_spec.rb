@@ -18,8 +18,8 @@ describe Fluent::GrepCounterOutput do
 
   describe 'test configure' do
     describe 'bad configuration' do
-      context "lack of requirements" do
-        let(:config) { '' }
+      context 'should not use classic style and new style together' do
+        let(:config) { %[input_key message\nregexp1 message foo] }
         it { expect { driver }.to raise_error(Fluent::ConfigError) }
       end
 
@@ -109,6 +109,22 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
+    context 'regexpN' do
+      let(:config) { %[ regexp1 message WARN ] }
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge({
+          "count"=>3,
+          "message"=>[
+            {"message"=>"2013/01/13T07:02:13.232645 WARN POST /auth"},
+            {"message"=>"2013/01/13T07:02:21.542145 WARN GET /favicon.ico"},
+            {"message"=>"2013/01/13T07:02:43.632145 WARN POST /login"},
+          ],
+        }))
+      end
+      it { emit }
+    end
+
     context 'exclude' do
       let(:config) { CONFIG + %[regexp WARN \n exclude favicon] }
       before do
@@ -118,6 +134,21 @@ describe Fluent::GrepCounterOutput do
           "message"=>[
             "2013/01/13T07:02:13.232645 WARN POST /auth",
             "2013/01/13T07:02:43.632145 WARN POST /login"
+          ],
+        }))
+      end
+      it { emit }
+    end
+
+    context 'excludeN' do
+      let(:config) { %[regexp1 message WARN \n exclude1 message favicon] }
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge({
+          "count"=>2,
+          "message"=>[
+            {"message"=>"2013/01/13T07:02:13.232645 WARN POST /auth"},
+            {"message"=>"2013/01/13T07:02:43.632145 WARN POST /login"},
           ],
         }))
       end
@@ -301,12 +332,24 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
-    context 'delimiter' do
+    context 'delimiter for old style (input_key)' do
       # \\n shall be \n in config file
       let(:config) { CONFIG + %[delimiter \\n] }
       before do
         Fluent::Engine.stub(:now).and_return(time)
         message = expected["message"].join('\n')
+        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
+      end
+      it { emit }
+    end
+
+    context 'delimiter for new style (regexpN or excludeN)' do
+      # \\n shall be \n in config file
+      let(:config) { %[regexp1 message .\ndelimiter \\n] }
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        # I will think of good format later ...
+        message = "{\"message\"=>\"2013/01/13T07:02:11.124202 INFO GET /ping\"}\\n{\"message\"=>\"2013/01/13T07:02:13.232645 WARN POST /auth\"}\\n{\"message\"=>\"2013/01/13T07:02:21.542145 WARN GET /favicon.ico\"}\\n{\"message\"=>\"2013/01/13T07:02:43.632145 WARN POST /login\"}"
         Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
       end
       it { emit }
