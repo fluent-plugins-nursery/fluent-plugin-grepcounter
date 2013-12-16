@@ -87,32 +87,23 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 
     The threshold number to emit. Emit if `count` value >= specified value.
 
-- comparator (obsolete)
-
-    The comparation operator for the threshold (either of `>=` or `<=`). Default is `>=`, i.e., emit if count >= threshold. 
-    NOTE: 0 count message will not be emitted even if `<=` is specified because standby nodes receive no message usually.
-
-- greater\_equal (from 0.2.0)
+- greater\_equal
 
     This is same with `threshold` option. Emit if `count` value is greater than or equal to (>=) specified value. 
     
-- greater\_than (from 0.2.0)
+- greater\_than
 
     Emit if `count` value is greater than (>) specified value. 
     
-- less\_than (from 0.2.0)
+- less\_than
 
     Emit if `count` value is less than (<) specified value. 
 
-- less\_equal (from 0.2.0)
+- less\_equal
 
     Emit if `count` value is less than or equal to (<=) specified value. 
 
-- output\_tag (obsolete from 0.4.0)
-
-    The output tag. Required for aggregate `all`. 
-
-- tag (from 0.4.0)
+- tag
 
     The output tag. Required for aggregate `all`. 
 
@@ -120,15 +111,11 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 
     Add tag prefix for output message
 
-- remove\_tag\_prefix (from 0.4.1)
+- remove\_tag\_prefix
 
     Remove tag prefix for output message
 
-- output\_with\_joined\_delimiter (obsolete from 0.4.0)
-
-    Output matched messages after `join`ed with the specified delimiter.
-
-- delimiter (from 0.4.0)
+- delimiter
 
     Output matched messages after `join`ed with the specified delimiter.
 
