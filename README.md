@@ -63,17 +63,25 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 
     The interval time to count in seconds. Default is 60.
 
-- input\_key
+- input\_key *field\_key*
 
-    The target field key to grep out
+    The target field key to grep out. Use with regexp or exclude. 
 
-- regexp
+- regexp *regexp*
 
     The filtering regular expression
 
-- exclude
+- exclude *regexp*
 
     The excluding regular expression like grep -v
+
+- regexp[1-20] *field\_key* *regexp* (experimental)
+
+    The target field key and the filtering regular expression to grep out. 
+
+- exclude[1-20] *field_key* *regexp* (experimental)
+
+    The target field key and the excluding regular expression like grep -v
 
 - threshold
 

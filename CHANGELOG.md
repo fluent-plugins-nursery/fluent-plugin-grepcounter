@@ -1,3 +1,9 @@
+## 0.5.0 (2013/12/17)
+
+Features
+
+  - Add `regexpN` and `excludeN` options
+
 ## 0.4.2 (2013/12/12)
 
 Features
