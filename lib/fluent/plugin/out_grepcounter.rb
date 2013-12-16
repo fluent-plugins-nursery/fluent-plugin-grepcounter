@@ -40,8 +40,6 @@ class Fluent::GrepCounterOutput < Fluent::Output
   def configure(conf)
     super
 
-    @count_interval = @count_interval.to_i
-
     if @input_key
       @regexp = Regexp.compile(@regexp) if @regexp
       @exclude = Regexp.compile(@exclude) if @exclude
@@ -69,51 +67,29 @@ class Fluent::GrepCounterOutput < Fluent::Output
       raise Fluent::ConfigError, "Classic style `input_key`, and new style `regexpN`, `excludeN` can not be used together"
     end
 
-    @threshold = @threshold.to_i if @threshold
+    # to support obsolete options
+    @tag ||= @output_tag
+    @delimiter ||= @output_with_joined_delimiter
 
     # to support obsolete `threshold` and `comparator` options
-    unless ['>=', '<='].include?(@comparator)
-      raise Fluent::ConfigError, "grepcounter: comparator allows >=, <="
-    end
     if @threshold.nil? and @less_than.nil? and @less_equal.nil? and @greater_than.nil? and @greater_equal.nil?
       @threshold = 1
     end
-    if @threshold and @comparator
-      if @comparator == '>='
+    unless %w[>= <=].include?(@comparator)
+      raise Fluent::ConfigError, "grepcounter: comparator allows >=, <="
+    end
+    if @threshold
+      case @comparator
+      when '>='
         @greater_equal = @threshold
       else
         @less_equal = @threshold
       end
     end
 
-    # to support osolete `output_tag` option
-    @tag = @output_tag if !@tag and @output_tag
-
-    # to support obsolete `output_with_joined_delimiter` option
-    @delimiter = @output_with_joined_delimiter if !@delimiter and @output_with_joined_delimiter
-
-    unless ['tag', 'all'].include?(@aggregate)
-      raise Fluent::ConfigError, "grepcounter: aggregate allows tag/all"
-    end
-
-    case @aggregate
-    when 'all'
-      raise Fluent::ConfigError, "grepcounter: output_tag must be specified with aggregate all" if @output_tag.nil?
-    when 'tag'
-      # raise Fluent::ConfigError, "grepcounter: add_tag_prefix must be specified with aggregate tag" if @add_tag_prefix.nil?
-    end
-
-    if @store_file
-      f = Pathname.new(@store_file)
-      if (f.exist? && !f.writable_real?) || (!f.exist? && !f.parent.writable_real?)
-        raise Fluent::ConfigError, "#{@store_file} is not writable"
-      end
-    end
-
     if @tag.nil? and @add_tag_prefix.nil? and @remove_tag_prefix.nil?
       @add_tag_prefix = 'count' # not ConfigError to support lower version compatibility
     end
-
     @tag_prefix = "#{@add_tag_prefix}." if @add_tag_prefix
     @tag_prefix_match = "#{@remove_tag_prefix}." if @remove_tag_prefix
     @tag_proc =
@@ -128,6 +104,22 @@ class Fluent::GrepCounterOutput < Fluent::Output
       else
         Proc.new {|tag| tag }
       end
+
+    case @aggregate
+    when 'all'
+      raise Fluent::ConfigError, "grepcounter: `tag` must be specified with aggregate all" if @tag.nil?
+    when 'tag'
+      # raise Fluent::ConfigError, "grepcounter: add_tag_prefix must be specified with aggregate tag" if @add_tag_prefix.nil?
+    else
+      raise Fluent::ConfigError, "grepcounter: aggregate allows tag/all"
+    end
+
+    if @store_file
+      f = Pathname.new(@store_file)
+      if (f.exist? && !f.writable_real?) || (!f.exist? && !f.parent.writable_real?)
+        raise Fluent::ConfigError, "#{@store_file} is not writable"
+      end
+    end
 
     @matches = {}
     @counts  = {}
