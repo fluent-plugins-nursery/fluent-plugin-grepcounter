@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "fluent-plugin-grepcounter"
-  s.version     = "0.5.0"
+  s.version     = "0.5.1"
   s.authors     = ["Naotoshi Seo"]
   s.email       = ["sonots@gmail.com"]
   s.homepage    = "https://github.com/sonots/fluent-plugin-grepcounter"
@@ -23,5 +23,4 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rspec"
   s.add_development_dependency "pry"
   s.add_development_dependency "pry-nav"
-  # s.add_development_dependency "delorean"
 end

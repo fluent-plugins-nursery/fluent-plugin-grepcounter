@@ -1,3 +1,9 @@
+## 0.5.1 (2013/12/28)
+
+Changes
+
+  - No `message` output in the case of `regexpN` or `excludeN` option
+
 ## 0.5.0 (2013/12/17)
 
 Features
