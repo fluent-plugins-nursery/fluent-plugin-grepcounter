@@ -231,8 +231,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
     if @input_key
       output['message'] = @delimiter ? matches.join(@delimiter) : matches
     else
-      # I will think of good format later...
-      output['message'] = @delimiter ? matches.map{|hash| hash.to_hash}.join(@delimiter) : matches
+      # no 'message' field in the case of regexpN and excludeN
     end
     if tag
       output['input_tag'] = tag

@@ -77,11 +77,11 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 
 - regexp[1-20] *field\_key* *regexp* (experimental)
 
-    The target field key and the filtering regular expression to grep out. 
+    The target field key and the filtering regular expression to grep out. No `message` is outputted in this case.
 
 - exclude[1-20] *field_key* *regexp* (experimental)
 
-    The target field key and the excluding regular expression like grep -v
+    The target field key and the excluding regular expression like grep -v. No `message` is outputted in this case.
 
 - threshold
 

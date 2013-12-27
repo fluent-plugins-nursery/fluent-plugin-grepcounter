@@ -8,6 +8,12 @@ class Fluent::Test::OutputTestDriver
   end
 end
 
+class Hash
+  def delete!(key)
+    self.tap {|h| h.delete(key) }
+  end
+end
+
 describe Fluent::GrepCounterOutput do
   before { Fluent::Test.setup }
   CONFIG = %[
@@ -115,12 +121,7 @@ describe Fluent::GrepCounterOutput do
         Fluent::Engine.stub(:now).and_return(time)
         Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge({
           "count"=>3,
-          "message"=>[
-            {"message"=>"2013/01/13T07:02:13.232645 WARN POST /auth"},
-            {"message"=>"2013/01/13T07:02:21.542145 WARN GET /favicon.ico"},
-            {"message"=>"2013/01/13T07:02:43.632145 WARN POST /login"},
-          ],
-        }))
+        }).delete!('message'))
       end
       it { emit }
     end
@@ -146,11 +147,7 @@ describe Fluent::GrepCounterOutput do
         Fluent::Engine.stub(:now).and_return(time)
         Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge({
           "count"=>2,
-          "message"=>[
-            {"message"=>"2013/01/13T07:02:13.232645 WARN POST /auth"},
-            {"message"=>"2013/01/13T07:02:43.632145 WARN POST /login"},
-          ],
-        }))
+        }).delete!('message'))
       end
       it { emit }
     end
@@ -332,24 +329,12 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
-    context 'delimiter for old style (input_key)' do
+    context 'delimiter' do
       # \\n shall be \n in config file
       let(:config) { CONFIG + %[delimiter \\n] }
       before do
         Fluent::Engine.stub(:now).and_return(time)
         message = expected["message"].join('\n')
-        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
-      end
-      it { emit }
-    end
-
-    context 'delimiter for new style (regexpN or excludeN)' do
-      # \\n shall be \n in config file
-      let(:config) { %[regexp1 message .\ndelimiter \\n] }
-      before do
-        Fluent::Engine.stub(:now).and_return(time)
-        # I will think of good format later ...
-        message = "{\"message\"=>\"2013/01/13T07:02:11.124202 INFO GET /ping\"}\\n{\"message\"=>\"2013/01/13T07:02:13.232645 WARN POST /auth\"}\\n{\"message\"=>\"2013/01/13T07:02:21.542145 WARN GET /favicon.ico\"}\\n{\"message\"=>\"2013/01/13T07:02:43.632145 WARN POST /login\"}"
         Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
       end
       it { emit }
