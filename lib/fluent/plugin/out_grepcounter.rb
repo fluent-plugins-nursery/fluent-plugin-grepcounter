@@ -2,6 +2,11 @@
 class Fluent::GrepCounterOutput < Fluent::Output
   Fluent::Plugin.register_output('grepcounter', self)
 
+  # To support log_level option implemented by Fluentd v0.10.43
+  unless method_defined?(:log)
+    define_method("log") { $log }
+  end
+
   REGEXP_MAX_NUM = 20
 
   def initialize
@@ -172,7 +177,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
 
     chain.next
   rescue => e
-    $log.warn "grepcounter: #{e.class} #{e.message} #{e.backtrace.first}"
+    log.warn "grepcounter: #{e.class} #{e.message} #{e.backtrace.first}"
   end
 
   # thread callback
@@ -188,7 +193,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
           @last_checked = now
         end
       rescue => e
-        $log.warn "grepcounter: #{e.class} #{e.message} #{e.backtrace.first}"
+        log.warn "grepcounter: #{e.class} #{e.message} #{e.backtrace.first}"
       end
     end
   end
@@ -281,7 +286,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
         }, f)
       end
     rescue => e
-      $log.warn "out_grepcounter: Can't write store_file #{e.class} #{e.message}"
+      log.warn "out_grepcounter: Can't write store_file #{e.class} #{e.message}"
     end
   end
 
@@ -307,14 +312,14 @@ class Fluent::GrepCounterOutput < Fluent::Output
             # skip the saved duration to continue counting
             @last_checked = Fluent::Engine.now - @saved_duration
           else
-            $log.warn "out_grepcounter: stored data is outdated. ignore stored data"
+            log.warn "out_grepcounter: stored data is outdated. ignore stored data"
           end
         else
-          $log.warn "out_grepcounter: configuration param was changed. ignore stored data"
+          log.warn "out_grepcounter: configuration param was changed. ignore stored data"
         end
       end
     rescue => e
-      $log.warn "out_grepcounter: Can't load store_file #{e.class} #{e.message}"
+      log.warn "out_grepcounter: Can't load store_file #{e.class} #{e.message}"
     end
   end
 
