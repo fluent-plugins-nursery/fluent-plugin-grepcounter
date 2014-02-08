@@ -1,4 +1,4 @@
-# fluent-plugin-grepcounter [![Build Status](https://secure.travis-ci.org/sonots/fluent-plugin-grepcounter.png?branch=master)](http://travis-ci.org/sonots/fluent-plugin-grepcounter)
+# fluent-plugin-grepcounter, a plugin for [Fluentd](http://fluentd.org) [![Build Status](https://secure.travis-ci.org/sonots/fluent-plugin-grepcounter.png?branch=master)](http://travis-ci.org/sonots/fluent-plugin-grepcounter)
 
 Fluentd plugin to count the number of matched messages, and emit if exeeds the `threshold`. 
 
