@@ -21,7 +21,7 @@ An example of grepcounter configuration:
       exclude favicon.ico
       threshold 1
       add_tag_prefix warn.count
-    </source>
+    </match>
 
 Then, output bocomes as belows (indented):
 
@@ -46,7 +46,7 @@ You may want to output `message` as a string, then use `delimiter` option like:
       threshold 1
       add_tag_prefix warn.count
       delimiter \n
-    </source>
+    </match>
 
 Then, output bocomes as belows (indented). You can see the `message` field is joined with \n.
 
