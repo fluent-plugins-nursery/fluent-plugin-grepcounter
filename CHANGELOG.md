@@ -1,3 +1,9 @@
+## 0.5.4 (2014/04/12)
+
+Changes:
+
+* Allow . in tag options to support compatibility with HandleTagNameMixin
+
 ## 0.5.3 (2014/04/11)
 
 Enhancement:
