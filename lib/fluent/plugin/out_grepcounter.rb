@@ -30,6 +30,8 @@ class Fluent::GrepCounterOutput < Fluent::Output
   config_param :tag, :string, :default => nil
   config_param :add_tag_prefix, :string, :default => nil
   config_param :remove_tag_prefix, :string, :default => nil
+  config_param :add_tag_suffix, :string, :default => nil
+  config_param :remove_tag_suffix, :string, :default => nil
   config_param :output_with_joined_delimiter, :string, :default => nil # obsolete
   config_param :delimiter, :string, :default => nil
   config_param :aggregate, :string, :default => 'tag'
@@ -92,22 +94,24 @@ class Fluent::GrepCounterOutput < Fluent::Output
       end
     end
 
-    if @tag.nil? and @add_tag_prefix.nil? and @remove_tag_prefix.nil?
+    if @tag.nil? and @add_tag_prefix.nil? and @remove_tag_prefix.nil? and @add_tag_suffix.nil? and @remove_tag_suffix.nil?
       @add_tag_prefix = 'count' # not ConfigError to support lower version compatibility
     end
     @tag_prefix = "#{@add_tag_prefix}." if @add_tag_prefix
+    @tag_suffix = ".#{@add_tag_suffix}" if @add_tag_suffix
     @tag_prefix_match = "#{@remove_tag_prefix}." if @remove_tag_prefix
+    @tag_suffix_match = ".#{@remove_tag_suffix}" if @remove_tag_suffix
     @tag_proc =
       if @tag
         Proc.new {|tag| @tag }
-      elsif @tag_prefix and @tag_prefix_match
-        Proc.new {|tag| "#{@tag_prefix}#{lstrip(tag, @tag_prefix_match)}" }
+      elsif @tag_prefix_match and @tag_suffix_match
+        Proc.new {|tag| "#{@tag_prefix}#{rstrip(lstrip(tag, @tag_prefix_match), @tag_suffix_match)}#{@tag_suffix}" }
       elsif @tag_prefix_match
-        Proc.new {|tag| lstrip(tag, @tag_prefix_match) }
-      elsif @tag_prefix
-        Proc.new {|tag| "#{@tag_prefix}#{tag}" }
+        Proc.new {|tag| "#{@tag_prefix}#{lstrip(tag, @tag_prefix_match)}#{@tag_suffix}" }
+      elsif @tag_suffix_match
+        Proc.new {|tag| "#{@tag_prefix}#{rstrip(tag, @tag_suffix_match)}#{@tag_suffix}" }
       else
-        Proc.new {|tag| tag }
+        Proc.new {|tag| "#{@tag_prefix}#{tag}#{@tag_suffix}" }
       end
 
     case @aggregate
@@ -243,6 +247,10 @@ class Fluent::GrepCounterOutput < Fluent::Output
       output['input_tag_last'] = tag.split('.').last
     end
     output
+  end
+
+  def rstrip(string, substring)
+    string.chomp(substring)
   end
 
   def lstrip(string, substring)

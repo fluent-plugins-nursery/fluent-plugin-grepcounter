@@ -302,6 +302,7 @@ describe Fluent::GrepCounterOutput do
 
     context 'add_tag_prefix' do
       let(:config) { CONFIG + %[add_tag_prefix foo] }
+      let(:tag) { 'syslog.host1' }
       before do
         Fluent::Engine.stub(:now).and_return(time)
         Fluent::Engine.should_receive(:emit).with("foo.#{tag}", time, expected)
@@ -311,9 +312,45 @@ describe Fluent::GrepCounterOutput do
 
     context 'remove_tag_prefix' do
       let(:config) { CONFIG + %[remove_tag_prefix syslog] }
+      let(:tag) { 'syslog.host1' }
       before do
         Fluent::Engine.stub(:now).and_return(time)
         Fluent::Engine.should_receive(:emit).with("host1", time, expected)
+      end
+      it { emit }
+    end
+
+    context 'add_tag_suffix' do
+      let(:config) { CONFIG + %[add_tag_suffix foo] }
+      let(:tag) { 'syslog.host1' }
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        Fluent::Engine.should_receive(:emit).with("#{tag}.foo", time, expected)
+      end
+      it { emit }
+    end
+
+    context 'remove_tag_suffix' do
+      let(:config) { CONFIG + %[remove_tag_suffix host1] }
+      let(:tag) { 'syslog.host1' }
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        Fluent::Engine.should_receive(:emit).with("syslog", time, expected)
+      end
+      it { emit }
+    end
+
+    context 'all tag options' do
+      let(:config) { CONFIG + %[
+         add_tag_prefix foo
+         add_tag_suffix foo
+         remove_tag_prefix syslog
+         remove_tag_suffix host1
+      ]}
+      let(:tag) { 'syslog.foo.host1' }
+      before do
+        Fluent::Engine.stub(:now).and_return(time)
+        Fluent::Engine.should_receive(:emit).with("foo.foo.foo", time, expected)
       end
       it { emit }
     end
