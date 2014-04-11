@@ -97,22 +97,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
     if @tag.nil? and @add_tag_prefix.nil? and @remove_tag_prefix.nil? and @add_tag_suffix.nil? and @remove_tag_suffix.nil?
       @add_tag_prefix = 'count' # not ConfigError to support lower version compatibility
     end
-    @tag_prefix = "#{@add_tag_prefix}." if @add_tag_prefix
-    @tag_suffix = ".#{@add_tag_suffix}" if @add_tag_suffix
-    @tag_prefix_match = "#{@remove_tag_prefix}." if @remove_tag_prefix
-    @tag_suffix_match = ".#{@remove_tag_suffix}" if @remove_tag_suffix
-    @tag_proc =
-      if @tag
-        Proc.new {|tag| @tag }
-      elsif @tag_prefix_match and @tag_suffix_match
-        Proc.new {|tag| "#{@tag_prefix}#{rstrip(lstrip(tag, @tag_prefix_match), @tag_suffix_match)}#{@tag_suffix}" }
-      elsif @tag_prefix_match
-        Proc.new {|tag| "#{@tag_prefix}#{lstrip(tag, @tag_prefix_match)}#{@tag_suffix}" }
-      elsif @tag_suffix_match
-        Proc.new {|tag| "#{@tag_prefix}#{rstrip(tag, @tag_suffix_match)}#{@tag_suffix}" }
-      else
-        Proc.new {|tag| "#{@tag_prefix}#{tag}#{@tag_suffix}" }
-      end
+    @tag_proc = tag_proc
 
     case @aggregate
     when 'all'
@@ -249,12 +234,25 @@ class Fluent::GrepCounterOutput < Fluent::Output
     output
   end
 
-  def rstrip(string, substring)
-    string.chomp(substring)
-  end
-
-  def lstrip(string, substring)
-    string.index(substring) == 0 ? string[substring.size..-1] : string
+  def tag_proc
+    rstrip = Proc.new {|str, substr| str.chomp(substr) }
+    lstrip = Proc.new {|str, substr| str.start_with?(substr) ? str[substr.size..-1] : str }
+    tag_prefix = "#{rstrip.call(@add_tag_prefix, '.')}." if @add_tag_prefix
+    tag_suffix = ".#{lstrip.call(@add_tag_suffix, '.')}" if @add_tag_suffix
+    tag_prefix_match = "#{rstrip.call(@remove_tag_prefix, '.')}." if @remove_tag_prefix
+    tag_suffix_match = ".#{lstrip.call(@remove_tag_suffix, '.')}" if @remove_tag_suffix
+    tag_fixed = @tag if @tag
+    if tag_fixed
+      Proc.new {|tag| tag_fixed }
+    elsif tag_prefix_match and tag_suffix_match
+      Proc.new {|tag| "#{tag_prefix}#{rstrip.call(lstrip.call(tag, tag_prefix_match), tag_suffix_match)}#{tag_suffix}" }
+    elsif tag_prefix_match
+      Proc.new {|tag| "#{tag_prefix}#{lstrip.call(tag, tag_prefix_match)}#{tag_suffix}" }
+    elsif tag_suffix_match
+      Proc.new {|tag| "#{tag_prefix}#{rstrip.call(tag, tag_suffix_match)}#{tag_suffix}" }
+    else
+      Proc.new {|tag| "#{tag_prefix}#{tag}#{tag_suffix}" }
+    end
   end
 
   def match(regexp, string)
