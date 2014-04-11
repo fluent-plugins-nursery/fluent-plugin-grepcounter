@@ -1,3 +1,9 @@
+## 0.5.3 (2014/04/11)
+
+Enhancement:
+
+* Add `add_tag_suffix` and `remove_tag_suffix` options
+
 ## 0.5.2 (2014/02/04)
 
 Enhancement:

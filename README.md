@@ -115,6 +115,14 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 
     Remove tag prefix for output message
 
+- add\_tag\_suffix
+
+    Add tag suffix for output message
+
+- remove\_tag\_suffix
+
+    Remove tag suffix for output message
+
 - delimiter
 
     Output matched messages after `join`ed with the specified delimiter.
