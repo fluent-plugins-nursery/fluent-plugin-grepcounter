@@ -4,6 +4,11 @@ require 'bundler'
 Bundler.setup(:default, :test)
 Bundler.require(:default, :test)
 
+if ENV['TRAVIS']
+  require 'coveralls'
+  Coveralls.wear!
+end
+
 require 'fluent/test'
 require 'rspec'
 require 'pry'
