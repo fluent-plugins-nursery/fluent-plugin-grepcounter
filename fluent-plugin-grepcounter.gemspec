@@ -21,6 +21,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "fluentd"
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec"
+  s.add_development_dependency "rspec-its"
   s.add_development_dependency "pry"
   s.add_development_dependency "pry-nav"
   s.add_development_dependency "coveralls"

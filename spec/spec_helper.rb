@@ -11,6 +11,7 @@ end
 
 require 'fluent/test'
 require 'rspec'
+require 'rspec/its'
 require 'pry'
 # require 'delorean'
 
