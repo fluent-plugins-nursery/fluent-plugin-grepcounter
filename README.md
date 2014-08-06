@@ -126,6 +126,24 @@ Then, output bocomes as belows (indented). You can see the `message` field is jo
 
     Remove tag suffix for output message
 
+* remove_tag_slice *min..max*
+
+    Remove tag parts by slice function. FYI: This option behaves like `tag.split('.').slice(min..max)`.
+
+    For example,
+
+        remove_tag_slice 0..-2
+
+    changes an input tag `foo.bar.host1` to `foo.bar`. 
+
+* aggregate
+
+    Aggregation unit. One of `all`, `in_tag`, `out_tag` can be specified. Default is `all`.
+
+    * `all` counts summation for all input messages and emit one message in each interval.
+    * `in_tag` counts summation for each input tag seperately. 
+    * `out_tag` counts summation for each tag *modified* by `add_tag_prefix`, `remove_tag_prefix`, or `remove_tag_slice`. 
+
 - delimiter
 
     Output matched messages after `join`ed with the specified delimiter.
