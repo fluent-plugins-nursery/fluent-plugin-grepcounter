@@ -93,8 +93,8 @@ describe Fluent::GrepCounterOutput do
     context 'default' do
       let(:config) { CONFIG }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
       end
       it { emit }
     end
@@ -102,8 +102,8 @@ describe Fluent::GrepCounterOutput do
     context 'regexp' do
       let(:config) { CONFIG + %[ regexp WARN ] }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge({
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge({
           "count"=>3,
           "message"=>[
             "2013/01/13T07:02:13.232645 WARN POST /auth",
@@ -118,8 +118,8 @@ describe Fluent::GrepCounterOutput do
     context 'regexpN' do
       let(:config) { %[ regexp1 message WARN ] }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge({
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge({
           "count"=>3,
         }).delete!('message'))
       end
@@ -129,8 +129,8 @@ describe Fluent::GrepCounterOutput do
     context 'exclude' do
       let(:config) { CONFIG + %[regexp WARN \n exclude favicon] }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge({
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge({
           "count"=>2,
           "message"=>[
             "2013/01/13T07:02:13.232645 WARN POST /auth",
@@ -144,8 +144,8 @@ describe Fluent::GrepCounterOutput do
     context 'excludeN' do
       let(:config) { %[regexp1 message WARN \n exclude1 message favicon] }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge({
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge({
           "count"=>2,
         }).delete!('message'))
       end
@@ -156,8 +156,8 @@ describe Fluent::GrepCounterOutput do
       context '>= threshold' do
         let(:config) { CONFIG + %[threshold 4] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -165,8 +165,8 @@ describe Fluent::GrepCounterOutput do
       context 'not >= threshold' do
         let(:config) { CONFIG + %[threshold 5] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_not_receive(:emit)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).not_to receive(:emit)
         end
         it { emit }
       end
@@ -174,8 +174,8 @@ describe Fluent::GrepCounterOutput do
       context '<= threshold' do
         let(:config) { CONFIG + %[threshold 4 \n comparator <=] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -183,8 +183,8 @@ describe Fluent::GrepCounterOutput do
       context 'not <= threshold' do
         let(:config) { CONFIG + %[threshold 3 \n comparator <=] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_not_receive(:emit)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).not_to receive(:emit)
         end
         it { emit }
       end
@@ -194,8 +194,8 @@ describe Fluent::GrepCounterOutput do
       context 'greater_equal' do
         let(:config) { CONFIG + %[greater_equal 4] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -203,8 +203,8 @@ describe Fluent::GrepCounterOutput do
       context 'not greater_equal' do
         let(:config) { CONFIG + %[greater_equal 5] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_not_receive(:emit)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).not_to receive(:emit)
         end
         it { emit }
       end
@@ -212,8 +212,8 @@ describe Fluent::GrepCounterOutput do
       context 'greater_than' do
         let(:config) { CONFIG + %[greater_than 3] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -221,8 +221,8 @@ describe Fluent::GrepCounterOutput do
       context 'not greater_than' do
         let(:config) { CONFIG + %[greater_than 4] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_not_receive(:emit)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).not_to receive(:emit)
         end
         it { emit }
       end
@@ -230,8 +230,8 @@ describe Fluent::GrepCounterOutput do
       context 'less_equal' do
         let(:config) { CONFIG + %[less_equal 4] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -239,8 +239,8 @@ describe Fluent::GrepCounterOutput do
       context 'not less_equal' do
         let(:config) { CONFIG + %[less_equal 3] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_not_receive(:emit)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).not_to receive(:emit)
         end
         it { emit }
       end
@@ -248,8 +248,8 @@ describe Fluent::GrepCounterOutput do
       context 'less_than' do
         let(:config) { CONFIG + %[less_than 5] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -257,8 +257,8 @@ describe Fluent::GrepCounterOutput do
       context 'not less_than' do
         let(:config) { CONFIG + %[less_than 4] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_not_receive(:emit)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).not_to receive(:emit)
         end
         it { emit }
       end
@@ -266,8 +266,8 @@ describe Fluent::GrepCounterOutput do
       context 'between' do
         let(:config) { CONFIG + %[greater_than 1 \n less_than 5] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -275,8 +275,8 @@ describe Fluent::GrepCounterOutput do
       context 'not between' do
         let(:config) { CONFIG + %[greater_than 1 \n less_than 4] }
         before do
-          Fluent::Engine.stub(:now).and_return(time)
-          Fluent::Engine.should_not_receive(:emit)
+          allow(Fluent::Engine).to receive(:now).and_return(time)
+          expect(Fluent::Engine).not_to receive(:emit)
         end
         it { emit }
       end
@@ -285,8 +285,8 @@ describe Fluent::GrepCounterOutput do
     context 'output_tag (obsolete)' do
       let(:config) { CONFIG + %[output_tag foo] }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("foo", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("foo", time, expected)
       end
       it { emit }
     end
@@ -294,8 +294,8 @@ describe Fluent::GrepCounterOutput do
     context 'tag' do
       let(:config) { CONFIG + %[tag foo] }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("foo", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("foo", time, expected)
       end
       it { emit }
     end
@@ -304,8 +304,8 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[add_tag_prefix foo] }
       let(:tag) { 'syslog.host1' }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("foo.#{tag}", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("foo.#{tag}", time, expected)
       end
       it { emit }
     end
@@ -314,8 +314,8 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[remove_tag_prefix syslog] }
       let(:tag) { 'syslog.host1' }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("host1", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("host1", time, expected)
       end
       it { emit }
     end
@@ -324,8 +324,8 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[add_tag_suffix foo] }
       let(:tag) { 'syslog.host1' }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("#{tag}.foo", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("#{tag}.foo", time, expected)
       end
       it { emit }
     end
@@ -334,8 +334,8 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[remove_tag_suffix host1] }
       let(:tag) { 'syslog.host1' }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("syslog", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("syslog", time, expected)
       end
       it { emit }
     end
@@ -349,8 +349,8 @@ describe Fluent::GrepCounterOutput do
       ]}
       let(:tag) { 'syslog.foo.host1' }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("foo.foo.foo", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("foo.foo.foo", time, expected)
       end
       it { emit }
     end
@@ -359,8 +359,8 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[add_tag_prefix foo.] }
       let(:tag) { 'syslog.host1' }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("foo.#{tag}", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("foo.#{tag}", time, expected)
       end
       it { emit }
     end
@@ -369,8 +369,8 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[remove_tag_prefix syslog.] }
       let(:tag) { 'syslog.host1' }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("host1", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("host1", time, expected)
       end
       it { emit }
     end
@@ -379,8 +379,8 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[add_tag_suffix .foo] }
       let(:tag) { 'syslog.host1' }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("#{tag}.foo", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("#{tag}.foo", time, expected)
       end
       it { emit }
     end
@@ -389,8 +389,8 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[remove_tag_suffix .host1] }
       let(:tag) { 'syslog.host1' }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("syslog", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("syslog", time, expected)
       end
       it { emit }
     end
@@ -399,9 +399,9 @@ describe Fluent::GrepCounterOutput do
       # \\n shall be \n in config file
       let(:config) { CONFIG + %[output_with_joined_delimiter \\n] }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
         message = expected["message"].join('\n')
-        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
+        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
       end
       it { emit }
     end
@@ -410,9 +410,9 @@ describe Fluent::GrepCounterOutput do
       # \\n shall be \n in config file
       let(:config) { CONFIG + %[delimiter \\n] }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
         message = expected["message"].join('\n')
-        Fluent::Engine.should_receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
+        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
       end
       it { emit }
     end
@@ -433,8 +433,8 @@ describe Fluent::GrepCounterOutput do
 
       let(:config) { CONFIG + %[aggregate all \n output_tag count] }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
-        Fluent::Engine.should_receive(:emit).with("count", time, expected)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("count", time, expected)
       end
       it { emit }
     end
@@ -443,7 +443,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[regexp WARN \n replace_invalid_sequence true] }
       let(:messages) { [ "\xff".force_encoding('UTF-8') ] }
       before do
-        Fluent::Engine.stub(:now).and_return(time)
+        allow(Fluent::Engine).to receive(:now).and_return(time)
       end
       it { expect { emit }.not_to raise_error }
     end
@@ -477,10 +477,10 @@ describe Fluent::GrepCounterOutput do
         loaded_saved_at = driver.instance.saved_at
         loaded_saved_duration = driver.instance.saved_duration
 
-        loaded_counts.should == stored_counts
-        loaded_matches.should == stored_matches
-        loaded_saved_at.should == stored_saved_at
-        loaded_saved_duration.should == stored_saved_duration
+        expect(loaded_counts).to eql(stored_counts)
+        expect(loaded_matches).to eql(stored_matches)
+        expect(loaded_saved_at).to eql(stored_saved_at)
+        expect(loaded_saved_duration).to eql(stored_saved_duration)
       end
     end
 
