@@ -340,6 +340,16 @@ describe Fluent::GrepCounterOutput do
       it { emit }
     end
 
+    context 'remove_tag_slice' do
+      let(:config) { CONFIG + %[remove_tag_slice 0..-2] }
+      let(:tag) { 'syslog.host1' }
+      before do
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("syslog", time, expected)
+      end
+      it { emit }
+    end
+
     context 'all tag options' do
       let(:config) { CONFIG + %[
          add_tag_prefix foo
@@ -435,6 +445,45 @@ describe Fluent::GrepCounterOutput do
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
         expect(Fluent::Engine).to receive(:emit).with("count", time, expected)
+      end
+      it { emit }
+    end
+
+    context 'aggregate in_tag' do
+      let(:messages) { ['foobar', 'foobar'] }
+      let(:emit) do
+        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar') } }
+        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar2') } }
+        driver.instance.flush_emit(0)
+      end
+
+      let(:config) { CONFIG + %[aggregate tag \n remove_tag_slice 0..-2] }
+      before do
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("foo", time, {
+          "count"=>2, "message"=>["foobar", "foobar"], "input_tag"=>"foo.bar", "input_tag_last"=>"bar"
+        })
+        expect(Fluent::Engine).to receive(:emit).with("foo", time, {
+          "count"=>2, "message"=>["foobar", "foobar"], "input_tag"=>"foo.bar2", "input_tag_last"=>"bar2"
+        })
+      end
+      it { emit }
+    end
+
+    context 'aggregate out_tag' do
+      let(:messages) { ['foobar', 'foobar'] }
+      let(:emit) do
+        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar') } }
+        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar2') } }
+        driver.instance.flush_emit(0)
+      end
+
+      let(:config) { CONFIG + %[aggregate out_tag \n remove_tag_slice 0..-2] }
+      before do
+        allow(Fluent::Engine).to receive(:now).and_return(time)
+        expect(Fluent::Engine).to receive(:emit).with("foo", time, {
+          "count"=>4, "message"=>["foobar", "foobar", "foobar", "foobar"]
+        })
       end
       it { emit }
     end
