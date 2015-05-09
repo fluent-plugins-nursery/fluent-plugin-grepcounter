@@ -7,6 +7,11 @@ class Fluent::GrepCounterOutput < Fluent::Output
     define_method("log") { $log }
   end
 
+  # Define `router` method of v0.12 to support v0.10 or earlier
+  unless method_defined?(:router)
+    define_method("router") { Fluent::Engine }
+  end
+
   REGEXP_MAX_NUM = 20
 
   def initialize
@@ -95,7 +100,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
       end
     end
 
-    if @tag.nil? and @add_tag_prefix.nil? and @remove_tag_prefix.nil? and @add_tag_suffix.nil? and @remove_tag_suffix.nil? and @remove_tag_slice.nil?
+    if conf['@label'].nil? and @tag.nil? and @add_tag_prefix.nil? and @remove_tag_prefix.nil? and @add_tag_suffix.nil? and @remove_tag_suffix.nil? and @remove_tag_slice.nil?
       @add_tag_prefix = 'count' # not ConfigError to support lower version compatibility
     end
     @tag_proc = tag_proc
@@ -203,14 +208,14 @@ class Fluent::GrepCounterOutput < Fluent::Output
       count = flushed_counts[:all]
       matches = flushed_matches[:all]
       output = generate_output(count, matches)
-      Fluent::Engine.emit(@tag, time, output) if output
+      router.emit(@tag, time, output) if output
     when 'out_tag'
       flushed_counts.keys.each do |out_tag|
         count = flushed_counts[out_tag]
         matches = flushed_matches[out_tag]
         output = generate_output(count, matches)
         if output
-          Fluent::Engine.emit(out_tag, time, output)
+          router.emit(out_tag, time, output)
         end
       end
     else # in_tag
@@ -220,7 +225,7 @@ class Fluent::GrepCounterOutput < Fluent::Output
         output = generate_output(count, matches, tag)
         if output
           out_tag = @tag_proc.call(tag)
-          Fluent::Engine.emit(out_tag, time, output)
+          router.emit(out_tag, time, output)
         end
       end
     end

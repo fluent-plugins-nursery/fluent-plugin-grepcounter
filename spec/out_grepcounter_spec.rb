@@ -94,7 +94,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected)
       end
       it { emit }
     end
@@ -103,7 +103,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[ regexp WARN ] }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge({
+        expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected.merge({
           "count"=>3,
           "message"=>[
             "2013/01/13T07:02:13.232645 WARN POST /auth",
@@ -119,7 +119,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) { %[ regexp1 message WARN ] }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge({
+        expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected.merge({
           "count"=>3,
         }).delete!('message'))
       end
@@ -130,7 +130,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[regexp WARN \n exclude favicon] }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge({
+        expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected.merge({
           "count"=>2,
           "message"=>[
             "2013/01/13T07:02:13.232645 WARN POST /auth",
@@ -145,7 +145,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) { %[regexp1 message WARN \n exclude1 message favicon] }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge({
+        expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected.merge({
           "count"=>2,
         }).delete!('message'))
       end
@@ -157,7 +157,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[threshold 4] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
+          expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -166,7 +166,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[threshold 5] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).not_to receive(:emit)
+          expect(driver.instance.router).not_to receive(:emit)
         end
         it { emit }
       end
@@ -175,7 +175,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[threshold 4 \n comparator <=] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
+          expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -184,7 +184,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[threshold 3 \n comparator <=] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).not_to receive(:emit)
+          expect(driver.instance.router).not_to receive(:emit)
         end
         it { emit }
       end
@@ -195,7 +195,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[greater_equal 4] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
+          expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -204,7 +204,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[greater_equal 5] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).not_to receive(:emit)
+          expect(driver.instance.router).not_to receive(:emit)
         end
         it { emit }
       end
@@ -213,7 +213,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[greater_than 3] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
+          expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -222,7 +222,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[greater_than 4] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).not_to receive(:emit)
+          expect(driver.instance.router).not_to receive(:emit)
         end
         it { emit }
       end
@@ -231,7 +231,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[less_equal 4] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
+          expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -240,7 +240,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[less_equal 3] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).not_to receive(:emit)
+          expect(driver.instance.router).not_to receive(:emit)
         end
         it { emit }
       end
@@ -249,7 +249,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[less_than 5] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
+          expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -258,7 +258,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[less_than 4] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).not_to receive(:emit)
+          expect(driver.instance.router).not_to receive(:emit)
         end
         it { emit }
       end
@@ -267,7 +267,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[greater_than 1 \n less_than 5] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected)
+          expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected)
         end
         it { emit }
       end
@@ -276,7 +276,7 @@ describe Fluent::GrepCounterOutput do
         let(:config) { CONFIG + %[greater_than 1 \n less_than 4] }
         before do
           allow(Fluent::Engine).to receive(:now).and_return(time)
-          expect(Fluent::Engine).not_to receive(:emit)
+          expect(driver.instance.router).not_to receive(:emit)
         end
         it { emit }
       end
@@ -286,7 +286,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[output_tag foo] }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("foo", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("foo", time, expected)
       end
       it { emit }
     end
@@ -295,7 +295,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[tag foo] }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("foo", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("foo", time, expected)
       end
       it { emit }
     end
@@ -305,7 +305,7 @@ describe Fluent::GrepCounterOutput do
       let(:tag) { 'syslog.host1' }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("foo.#{tag}", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("foo.#{tag}", time, expected)
       end
       it { emit }
     end
@@ -315,7 +315,7 @@ describe Fluent::GrepCounterOutput do
       let(:tag) { 'syslog.host1' }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("host1", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("host1", time, expected)
       end
       it { emit }
     end
@@ -325,7 +325,7 @@ describe Fluent::GrepCounterOutput do
       let(:tag) { 'syslog.host1' }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("#{tag}.foo", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("#{tag}.foo", time, expected)
       end
       it { emit }
     end
@@ -335,7 +335,7 @@ describe Fluent::GrepCounterOutput do
       let(:tag) { 'syslog.host1' }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("syslog", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("syslog", time, expected)
       end
       it { emit }
     end
@@ -345,7 +345,7 @@ describe Fluent::GrepCounterOutput do
       let(:tag) { 'syslog.host1' }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("syslog", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("syslog", time, expected)
       end
       it { emit }
     end
@@ -360,7 +360,7 @@ describe Fluent::GrepCounterOutput do
       let(:tag) { 'syslog.foo.host1' }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("foo.foo.foo", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("foo.foo.foo", time, expected)
       end
       it { emit }
     end
@@ -370,7 +370,7 @@ describe Fluent::GrepCounterOutput do
       let(:tag) { 'syslog.host1' }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("foo.#{tag}", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("foo.#{tag}", time, expected)
       end
       it { emit }
     end
@@ -380,7 +380,7 @@ describe Fluent::GrepCounterOutput do
       let(:tag) { 'syslog.host1' }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("host1", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("host1", time, expected)
       end
       it { emit }
     end
@@ -390,7 +390,7 @@ describe Fluent::GrepCounterOutput do
       let(:tag) { 'syslog.host1' }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("#{tag}.foo", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("#{tag}.foo", time, expected)
       end
       it { emit }
     end
@@ -400,7 +400,7 @@ describe Fluent::GrepCounterOutput do
       let(:tag) { 'syslog.host1' }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("syslog", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("syslog", time, expected)
       end
       it { emit }
     end
@@ -411,7 +411,7 @@ describe Fluent::GrepCounterOutput do
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
         message = expected["message"].join('\n')
-        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
+        expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
       end
       it { emit }
     end
@@ -422,7 +422,7 @@ describe Fluent::GrepCounterOutput do
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
         message = expected["message"].join('\n')
-        expect(Fluent::Engine).to receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
+        expect(driver.instance.router).to receive(:emit).with("count.#{tag}", time, expected.merge("message" => message))
       end
       it { emit }
     end
@@ -444,7 +444,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[aggregate all \n output_tag count] }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("count", time, expected)
+        expect(driver.instance.router).to receive(:emit).with("count", time, expected)
       end
       it { emit }
     end
@@ -460,10 +460,10 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[aggregate tag \n remove_tag_slice 0..-2] }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("foo", time, {
+        expect(driver.instance.router).to receive(:emit).with("foo", time, {
           "count"=>2, "message"=>["foobar", "foobar"], "input_tag"=>"foo.bar", "input_tag_last"=>"bar"
         })
-        expect(Fluent::Engine).to receive(:emit).with("foo", time, {
+        expect(driver.instance.router).to receive(:emit).with("foo", time, {
           "count"=>2, "message"=>["foobar", "foobar"], "input_tag"=>"foo.bar2", "input_tag_last"=>"bar2"
         })
       end
@@ -481,7 +481,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[aggregate out_tag \n remove_tag_slice 0..-2] }
       before do
         allow(Fluent::Engine).to receive(:now).and_return(time)
-        expect(Fluent::Engine).to receive(:emit).with("foo", time, {
+        expect(driver.instance.router).to receive(:emit).with("foo", time, {
           "count"=>4, "message"=>["foobar", "foobar", "foobar", "foobar"]
         })
       end
