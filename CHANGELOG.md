@@ -1,3 +1,9 @@
+## 0.5.6 (2015/05/10)
+
+Enhancements:
+
+* Support label feature of Fluentd v0.12
+
 ## 0.5.5 (2014/08/06)
 
 Enhancements:
