@@ -25,4 +25,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "pry"
   s.add_development_dependency "pry-nav"
   s.add_development_dependency "coveralls"
+  s.add_development_dependency "test-unit", "~> 3.1.5"
 end
