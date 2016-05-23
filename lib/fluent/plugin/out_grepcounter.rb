@@ -19,30 +19,64 @@ class Fluent::GrepCounterOutput < Fluent::Output
     require 'pathname'
   end
 
-  config_param :input_key, :string, :default => nil
-  config_param :regexp, :string, :default => nil
-  config_param :exclude, :string, :default => nil
-  (1..REGEXP_MAX_NUM).each {|i| config_param :"regexp#{i}",  :string, :default => nil }
+  config_param :input_key, :string, :default => nil,
+               :desc => <<-DESC
+The target field key to grep out.
+Use with regexp or exclude.
+DESC
+  config_param :regexp, :string, :default => nil,
+               :desc => 'The filtering regular expression.'
+  config_param :exclude, :string, :default => nil,
+               :desc => 'The excluding regular expression like grep -v.'
+  (1..REGEXP_MAX_NUM).each {|i| config_param :"regexp#{i}", :string, :default => nil }
   (1..REGEXP_MAX_NUM).each {|i| config_param :"exclude#{i}", :string, :default => nil }
-  config_param :count_interval, :time, :default => 5
-  config_param :threshold, :integer, :default => nil # not obsolete, though
+  config_param :count_interval, :time, :default => 5,
+               :desc => 'The interval time to count in seconds.'
+  config_param :threshold, :integer, :default => nil, # not obsolete, though
+               :desc => <<-DESC
+The threshold number to emit.
+Emit if count value >= specified value.
+Note that this param is not obsolete.
+DESC
   config_param :comparator, :string, :default => '>=' # obsolete
-  config_param :less_than, :float, :default => nil
-  config_param :less_equal, :float, :default => nil
-  config_param :greater_than, :float, :default => nil
-  config_param :greater_equal, :float, :default => nil
+  config_param :less_than, :float, :default => nil,
+               :desc => 'Emit if count value is less than (<) specified value.'
+  config_param :less_equal, :float, :default => nil,
+               :desc => 'Emit if count value is less than or equal to (<=) specified value.'
+  config_param :greater_than, :float, :default => nil,
+               :desc => 'Emit if count value is greater than (>) specified value.'
+  config_param :greater_equal, :float, :default => nil,
+               :desc => <<-DESC
+This is same with threshold option.
+Emit if count value is greater than or equal to (>=) specified value.
+DESC
   config_param :output_tag, :string, :default => nil # obsolete
-  config_param :tag, :string, :default => nil
-  config_param :add_tag_prefix, :string, :default => nil
-  config_param :remove_tag_prefix, :string, :default => nil
-  config_param :add_tag_suffix, :string, :default => nil
-  config_param :remove_tag_suffix, :string, :default => nil
-  config_param :remove_tag_slice, :string, :default => nil
+  config_param :tag, :string, :default => nil,
+               :desc => 'The output tag. Required for aggregate all.'
+  config_param :add_tag_prefix, :string, :default => nil,
+               :desc => 'Add tag prefix for output message.'
+  config_param :remove_tag_prefix, :string, :default => nil,
+               :desc => 'Remove tag prefix for output message.'
+  config_param :add_tag_suffix, :string, :default => nil,
+               :desc => 'Add tag suffix for output message.'
+  config_param :remove_tag_suffix, :string, :default => nil,
+               :desc => 'Remove tag suffix for output message.'
+  config_param :remove_tag_slice, :string, :default => nil,
+               :desc => <<-DESC
+Remove tag parts by slice function.
+Note that this option behaves like tag.split('.').slice(min..max).
+DESC
   config_param :output_with_joined_delimiter, :string, :default => nil # obsolete
-  config_param :delimiter, :string, :default => nil
-  config_param :aggregate, :string, :default => 'tag'
-  config_param :replace_invalid_sequence, :bool, :default => false
-  config_param :store_file, :string, :default => nil
+  config_param :delimiter, :string, :default => nil,
+               :desc => 'Output matched messages after joined with the specified delimiter.'
+  config_param :aggregate, :string, :default => 'tag',
+               :desc => 'Aggregation unit. One of all, in_tag, out_tag can be specified.'
+  config_param :replace_invalid_sequence, :bool, :default => false,
+               :desc => "Replace invalid byte sequence in UTF-8 with '?' character if true."
+  config_param :store_file, :string, :default => nil,
+               :desc => <<-DESC
+Store internal count data into a file of the given path on shutdown, and load on statring.
+DESC
 
   attr_accessor :counts
   attr_accessor :matches
