@@ -526,10 +526,10 @@ describe Fluent::GrepCounterOutput do
         loaded_saved_at = driver.instance.saved_at
         loaded_saved_duration = driver.instance.saved_duration
 
-        expect(loaded_counts).to eql(stored_counts)
-        expect(loaded_matches).to eql(stored_matches)
-        expect(loaded_saved_at).to eql(stored_saved_at)
-        expect(loaded_saved_duration).to eql(stored_saved_duration)
+        expect(loaded_counts).to eq(stored_counts)
+        expect(loaded_matches).to eq(stored_matches)
+        expect(loaded_saved_at).to eq(stored_saved_at)
+        expect(loaded_saved_duration).to eq(stored_saved_duration)
       end
     end
 
