@@ -1,6 +1,9 @@
 # encoding: UTF-8
-class Fluent::GrepCounterOutput < Fluent::Output
+require 'fluent/plugin/output'
+
+class Fluent::Plugin::GrepCounterOutput < Fluent::Plugin::Output
   Fluent::Plugin.register_output('grepcounter', self)
+  helpers :event_emitter
 
   # To support log_level option implemented by Fluentd v0.10.43
   unless method_defined?(:log)
@@ -177,7 +180,7 @@ DESC
   end
 
   # Called when new line comes. This method actually does not emit
-  def emit(tag, es, chain)
+  def process(tag, es)
     count = 0; matches = []
     # filter out and insert
     es.each do |time,record|
@@ -208,8 +211,6 @@ DESC
       @counts[aggregate_key] += count
       @matches[aggregate_key] += matches
     end
-
-    chain.next
   rescue => e
     log.warn "grepcounter: #{e.class} #{e.message} #{e.backtrace.first}"
   end
