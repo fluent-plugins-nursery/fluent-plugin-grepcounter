@@ -1,4 +1,5 @@
 # encoding: UTF-8
+require 'pathname'
 require 'fluent/plugin/output'
 
 class Fluent::Plugin::GrepCounterOutput < Fluent::Plugin::Output
@@ -19,7 +20,6 @@ class Fluent::Plugin::GrepCounterOutput < Fluent::Plugin::Output
 
   def initialize
     super
-    require 'pathname'
   end
 
   config_param :input_key, :string, :default => nil,
