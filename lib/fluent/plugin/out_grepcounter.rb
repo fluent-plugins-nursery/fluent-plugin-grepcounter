@@ -18,10 +18,6 @@ class Fluent::Plugin::GrepCounterOutput < Fluent::Plugin::Output
 
   REGEXP_MAX_NUM = 20
 
-  def initialize
-    super
-  end
-
   config_param :input_key, :string, :default => nil,
                :desc => <<-DESC
 The target field key to grep out.
