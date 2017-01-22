@@ -1,3 +1,5 @@
+require 'fluent/output'
+
 # encoding: UTF-8
 class Fluent::GrepCounterOutput < Fluent::Output
   Fluent::Plugin.register_output('grepcounter', self)
