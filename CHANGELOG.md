@@ -1,3 +1,14 @@
+## 0.6.0 (2017/01/23)
+
+Changes:
+
+* Drop ruby 1.9.2 and 2.0.0 supports
+
+Enhancements:
+
+* Add config descriptions
+* Add fluent module require explicitly
+
 ## 0.5.6 (2015/05/10)
 
 Enhancements:
