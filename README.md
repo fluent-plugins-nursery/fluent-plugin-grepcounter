@@ -17,7 +17,7 @@ Assume inputs from another plugin are as belows:
 An example of grepcounter configuration:
 
     <match syslog.**>
-      type grepcounter
+      @type grepcounter
       count_interval 60
       input_key message
       regexp WARN
@@ -41,7 +41,7 @@ As default, the `grepcounter` plugin outputs matched `message` as an array as sh
 You may want to output `message` as a string, then use `delimiter` option like:
 
     <match syslog.**>
-      type grepcounter
+      @type grepcounter
       count_interval 60
       input_key message
       regexp WARN
