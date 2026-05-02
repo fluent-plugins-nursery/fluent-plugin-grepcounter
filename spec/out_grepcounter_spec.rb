@@ -1,10 +1,11 @@
 # encoding: UTF-8
 require_relative 'spec_helper'
+require 'fluent/test/driver/output'
 
-class Fluent::Test::OutputTestDriver
-  def emit_with_tag(record, time=Time.now, tag = nil)
-    @tag = tag if tag
-    emit(record, time)
+module Fluent::Test::Driver::EventFeeder
+  def emit_with_tag(record, time=Fluent::Engine.now, tag = nil)
+    @default_tag = tag if tag
+    feed(@default_tag, time, record)
   end
 end
 
@@ -14,13 +15,13 @@ class Hash
   end
 end
 
-describe Fluent::GrepCounterOutput do
+describe Fluent::Plugin::GrepCounterOutput do
   before { Fluent::Test.setup }
   CONFIG = %[
     input_key message
   ]
   let(:tag) { 'syslog.host1' }
-  let(:driver) { Fluent::Test::OutputTestDriver.new(Fluent::GrepCounterOutput, tag).configure(config) }
+  let(:driver) { Fluent::Test::Driver::Output.new(Fluent::Plugin::GrepCounterOutput).configure(config) }
 
   describe 'test configure' do
     describe 'bad configuration' do
@@ -63,7 +64,7 @@ describe Fluent::GrepCounterOutput do
   end
 
   describe 'test emit' do
-    let(:time) { Time.now.to_i }
+    let(:time) { Fluent::Engine.now }
     let(:messages) do
       [
         "2013/01/13T07:02:11.124202 INFO GET /ping",
@@ -73,8 +74,10 @@ describe Fluent::GrepCounterOutput do
       ]
     end
     let(:emit) do
-      driver.run { messages.each {|message| driver.emit({'message' => message}, time) } }
-      driver.instance.flush_emit(0)
+      driver.run(default_tag: tag) {
+        messages.each {|message| driver.feed(time, {'message' => message}) }
+        driver.instance.flush_emit(0)
+      }
     end
     let(:expected) do
       {
@@ -430,9 +433,11 @@ describe Fluent::GrepCounterOutput do
     context 'aggregate all' do
       let(:messages) { ['foobar', 'foobar'] }
       let(:emit) do
-        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar') } }
-        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar2') } }
-        driver.instance.flush_emit(0)
+        driver.run {
+          messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar') }
+          messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar2') }
+          driver.instance.flush_emit(0)
+        }
       end
       let(:expected) do
         {
@@ -452,9 +457,11 @@ describe Fluent::GrepCounterOutput do
     context 'aggregate in_tag' do
       let(:messages) { ['foobar', 'foobar'] }
       let(:emit) do
-        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar') } }
-        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar2') } }
-        driver.instance.flush_emit(0)
+        driver.run {
+          messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar') }
+          messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar2') }
+          driver.instance.flush_emit(0)
+        }
       end
 
       let(:config) { CONFIG + %[aggregate tag \n remove_tag_slice 0..-2] }
@@ -473,9 +480,11 @@ describe Fluent::GrepCounterOutput do
     context 'aggregate out_tag' do
       let(:messages) { ['foobar', 'foobar'] }
       let(:emit) do
-        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar') } }
-        driver.run { messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar2') } }
-        driver.instance.flush_emit(0)
+        driver.run {
+          messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar') }
+          messages.each {|message| driver.emit_with_tag({'message' => message}, time, 'foo.bar2') }
+          driver.instance.flush_emit(0)
+        }
       end
 
       let(:config) { CONFIG + %[aggregate out_tag \n remove_tag_slice 0..-2] }
@@ -509,7 +518,7 @@ describe Fluent::GrepCounterOutput do
       let(:config) { CONFIG + %[store_file #{store_file}] }
 
       it 'stored_data and loaded_data should equal' do
-        driver.run { messages.each {|message| driver.emit({'message' => message}, time) } }
+        driver.run(default_tag: tag) { messages.each {|message| driver.feed(time, {'message' => message}) } }
         driver.instance.shutdown
         stored_counts = driver.instance.counts
         stored_matches = driver.instance.matches
