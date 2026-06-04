@@ -1,7 +1,7 @@
 # fluent-plugin-grepcounter
 
-[![Build Status](https://secure.travis-ci.org/sonots/fluent-plugin-grepcounter.png?branch=master)](http://travis-ci.org/sonots/fluent-plugin-grepcounter)
-[![Coverage Status](https://coveralls.io/repos/sonots/fluent-plugin-grepcounter/badge.png?branch=master)](https://coveralls.io/r/sonots/fluent-plugin-grepcounter?branch=master)
+[![test](https://github.com/fluent-plugins-nursery/fluent-plugin-grepcounter/actions/workflows/test.yml/badge.svg)](https://github.com/fluent-plugins-nursery/fluent-plugin-grepcounter/actions/workflows/test.yml)
+[![Coverage Status](https://coveralls.io/repos/github/sonots/fluent-plugin-grepcounter/badge.svg?branch=master)](https://coveralls.io/github/sonots/fluent-plugin-grepcounter?branch=master)
 
 Fluentd plugin to count the number of matched messages, and emit if exeeds the `threshold`. 
 
