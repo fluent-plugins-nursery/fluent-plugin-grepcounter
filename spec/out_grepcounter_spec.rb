@@ -6,6 +6,16 @@ class Fluent::Test::OutputTestDriver
     @tag = tag if tag
     emit(record, time)
   end
+
+  # Since fluentd v1.19.3, TestDriver#run invokes the full shutdown lifecycle
+  # (after_shutdown/close/terminate), each of which resets the plugin's router
+  # to nil. These specs call flush_emit after run, so restore the router to
+  # keep router.emit working.
+  def run(*args, &block)
+    super
+  ensure
+    instance.router = Fluent::Engine.root_agent.event_router
+  end
 end
 
 class Hash
